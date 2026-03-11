@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Agent Dashboard</title>
+<title>Agents Dashboard</title>
 
 <style>
 
@@ -14,21 +14,21 @@ padding:0;
 width:100vw;
 height:100vh;
 overflow:hidden;
-font-family:Arial, sans-serif;
 background:#fff;
+font-family:Arial, sans-serif;
 }
 
 .wrap{
-width:100%;
-height:100%;
+height:100vh;
 display:flex;
 flex-direction:column;
 }
 
 .topbar{
-padding:14px 20px;
 display:flex;
 justify-content:space-between;
+align-items:center;
+padding:14px 18px;
 border-bottom:1px solid #eee;
 }
 
@@ -42,21 +42,45 @@ font-size:16px;
 opacity:.7;
 }
 
-.chart{
+.chartArea{
 flex:1;
-padding:20px;
+padding:16px;
 box-sizing:border-box;
+}
+
+.card{
+height:100%;
+border:1px solid #eee;
+border-radius:14px;
+padding:14px;
+box-sizing:border-box;
+display:flex;
+flex-direction:column;
+}
+
+.card h2{
+margin:0 0 10px 0;
+font-size:22px;
+}
+
+.chartHost{
+flex:1;
+}
+
+.vwrap{
+height:100%;
+display:grid;
+grid-template-rows: 1fr 120px;
+gap:8px;
 }
 
 .plot{
 position:relative;
-width:100%;
-height:100%;
 border:1px solid #eee;
-border-radius:14px;
+border-radius:12px;
 overflow:hidden;
 background:
-linear-gradient(to bottom, rgba(0,0,0,.07) 1px, transparent 1px);
+linear-gradient(to bottom, rgba(0,0,0,.08) 1px, transparent 1px);
 background-size:100% 20%;
 }
 
@@ -64,6 +88,35 @@ canvas{
 width:100%;
 height:100%;
 display:block;
+}
+
+/* подписи снизу */
+
+.xlabels{
+display:flex;
+justify-content:center;
+gap:18px;
+padding-top:18px;
+}
+
+.xlabel{
+width:80px;
+text-align:center;
+font-weight:900;
+font-size:48px;
+line-height:1;
+
+transform: rotate(-60deg);
+transform-origin: bottom center;
+}
+
+/* числа сверху */
+
+.valueLabel{
+position:absolute;
+font-weight:900;
+font-size:48px;
+transform:translateX(-50%);
 }
 
 </style>
@@ -74,79 +127,57 @@ display:block;
 <div class="wrap">
 
 <div class="topbar">
-<div class="title">Agent statistics</div>
+<div class="title">Agents dashboard</div>
 <div class="status" id="status">Загрузка…</div>
 </div>
 
-<div class="chart">
-<div class="plot">
-<canvas id="chart"></canvas>
+<div class="chartArea">
+
+<div class="card">
+
+<h2>Agents</h2>
+
+<div id="chart" class="chartHost"></div>
+
 </div>
+
 </div>
 
 </div>
 
 <script>
 
-const SPREADSHEET_ID = "1d801Kn2bLsQeg4ftU3oeWQXgvA6B5GsGkjzEwjeh1b8"
-const GID = "119792443"
-const RANGE = "C3:D19"
+const SPREADSHEET_ID="1d801Kn2bLsQeg4ftU3oeWQXgvA6B5GsGkjzEwjeh1b8"
+const GID="119792443"
 
-const REFRESH_MS = 90000
+const RANGE="C3:D19"
 
-const statusEl = document.getElementById("status")
-const canvas = document.getElementById("chart")
+const REFRESH_MS=90000
+
+const chart=document.getElementById("chart")
+const statusEl=document.getElementById("status")
 
 function csvUrl(){
+
 return `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=csv&gid=${GID}&range=${RANGE}&t=${Date.now()}`
+
 }
 
 function parseCSV(text){
 
 if(text.charCodeAt(0)===0xFEFF) text=text.slice(1)
 
-const rows=[]
-let row=[]
-let cell=""
-let inQuotes=false
+return text.split("\n").map(r=>r.split(","))
 
-for(let i=0;i<text.length;i++){
-
-const ch=text[i]
-const next=text[i+1]
-
-if(ch=='"' && inQuotes && next=='"'){cell+='"';i++;continue}
-if(ch=='"'){inQuotes=!inQuotes;continue}
-
-if(ch=="\n" && !inQuotes){
-row.push(cell)
-rows.push(row)
-row=[]
-cell=""
-continue
-}
-
-if(ch=="\r")continue
-
-if(ch=="," && !inQuotes){
-row.push(cell)
-cell=""
-continue
-}
-
-cell+=ch
-}
-
-row.push(cell)
-rows.push(row)
-
-return rows
 }
 
 function toNumber(v){
+
 const s=String(v).replace(/\s/g,"").replace(",",".")
 const n=Number(s)
+
 return Number.isFinite(n)?n:0
+
 }
 
 function niceMax(v){
@@ -156,19 +187,50 @@ if(v<=0)return 1
 const exp=Math.pow(10,Math.floor(Math.log10(v)))
 const frac=v/exp
 
-let niceFrac
+let nice
 
-if(frac<=1)niceFrac=1
-else if(frac<=2)niceFrac=2
-else if(frac<=5)niceFrac=5
-else niceFrac=10
+if(frac<=1)nice=1
+else if(frac<=2)nice=2
+else if(frac<=5)nice=5
+else nice=10
 
-return niceFrac*exp
+return nice*exp
+
 }
 
-function draw(){
+function renderChart(rows){
 
-const rect=canvas.parentElement.getBoundingClientRect()
+const items=rows.map(r=>({
+
+name:r[0],
+value:toNumber(r[1])
+
+}))
+
+items.sort((a,b)=>b.value-a.value)
+
+const maxData=Math.max(...items.map(x=>x.value))
+const axisMax=niceMax(maxData)
+
+chart.innerHTML=`
+
+<div class="vwrap">
+
+<div class="plot">
+<canvas></canvas>
+</div>
+
+<div class="xlabels">
+${items.map(i=>`<div class="xlabel">${i.name}</div>`).join("")}
+</div>
+
+</div>
+`
+
+const canvas=chart.querySelector("canvas")
+const plot=chart.querySelector(".plot")
+
+const rect=plot.getBoundingClientRect()
 
 const dpr=window.devicePixelRatio||1
 
@@ -181,51 +243,36 @@ canvas.style.height=rect.height+"px"
 const ctx=canvas.getContext("2d")
 ctx.setTransform(dpr,0,0,dpr,0,0)
 
-return ctx
-}
+const padL=20
+const padR=20
+const padT=20
+const padB=40
 
-function renderChart(data){
-
-const ctx=draw()
-
-const rect=canvas.getBoundingClientRect()
-
-const pad=60
-
-const W=rect.width-pad*2
-const H=rect.height-pad*2
-
-const max=Math.max(...data.map(d=>d.value))
-const axisMax=niceMax(max)
+const W=rect.width-padL-padR
+const H=rect.height-padT-padB
 
 const gap=18
-const barW=Math.max(20,(W-gap*(data.length-1))/data.length)
 
-let x=pad
+const barW=(W-gap*(items.length-1))/items.length
 
-data.forEach(it=>{
+let startX=padL
+
+items.forEach((it,i)=>{
 
 const pct=it.value/axisMax
 const h=pct*H
 
-const y=pad+H-h
+const x=startX+i*(barW+gap)
+const y=padT+(H-h)
 
 ctx.fillStyle="#1f2937"
 ctx.fillRect(x,y,barW,h)
 
 ctx.fillStyle="#000"
-ctx.font="bold 20px Arial"
+ctx.font="bold 40px Arial"
 ctx.textAlign="center"
 
 ctx.fillText(it.value,x+barW/2,y-6)
-
-ctx.save()
-ctx.translate(x+barW/2,pad+H+10)
-ctx.rotate(-Math.PI/3)
-ctx.fillText(it.name,0,0)
-ctx.restore()
-
-x+=barW+gap
 
 })
 
@@ -241,16 +288,9 @@ const text=await fetch(csvUrl(),{cache:"no-store"}).then(r=>r.text())
 
 const rows=parseCSV(text)
 
-const data=rows.map(r=>({
-name:r[0],
-value:toNumber(r[1])
-}))
+renderChart(rows)
 
-data.sort((a,b)=>b.value-a.value)
-
-renderChart(data)
-
-statusEl.textContent="Обновлено: "+new Date().toLocaleTimeString()
+statusEl.textContent="Обновлено "+new Date().toLocaleTimeString()
 
 }catch(e){
 
@@ -261,6 +301,7 @@ statusEl.textContent="Ошибка"
 }
 
 load()
+
 setInterval(load,REFRESH_MS)
 
 window.addEventListener("resize",load)
