@@ -70,7 +70,7 @@ flex:1;
 .vwrap{
 height:100%;
 display:grid;
-grid-template-rows: 1fr 150px;
+grid-template-rows: calc(100% - 140px) 140px;
 gap:8px;
 }
 
@@ -103,11 +103,10 @@ padding-top:18px;
 width:80px;
 text-align:center;
 font-weight:900;
-font-size:48px;
-line-height:1;
+font-size:42px;
 
-transform: rotate(-60deg);
-transform-origin: bottom center;
+transform:rotate(-60deg);
+transform-origin:bottom center;
 }
 
 /* числа сверху */
