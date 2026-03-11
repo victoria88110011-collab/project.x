@@ -241,10 +241,14 @@ const padB = 140
 const W=rect.width-padL-padR
 const H=rect.height-padT-padB
 
-const gap=18
-const barW=(W-gap*(items.length-1))/items.length
+const gap = 18
 
-let startX=padL
+const maxBarWidth = 90
+const barW = Math.min(maxBarWidth,(W-gap*(items.length-1))/items.length)
+
+const chartWidth = items.length*barW + gap*(items.length-1)
+
+let startX = padL + (W-chartWidth)/2
 
 items.forEach((it,i)=>{
 
