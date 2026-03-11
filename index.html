@@ -28,7 +28,7 @@ display:flex;
 width:100%;
 height:100%;
 display:grid;
-grid-template-rows: calc(100% - 220px) 220px;gap:10px;
+grid-template-rows: 1fr 260px;
 padding:20px;
 box-sizing:border-box;
 }
@@ -52,16 +52,26 @@ display:block;
 .xlabels{
 display:grid;
 grid-auto-flow:column;
-justify-content:stretch;
-align-items:flex-start;
+grid-auto-columns:1fr;
+
+align-items:start;
+justify-items:center;
+
+padding-top:20px;
 }
 
 .xlabel{
-text-align:center;
+width:100%;
+display:flex;
+justify-content:center;
+align-items:flex-start;
+
 font-weight:900;
-font-size:32px;
+font-size:40px;
+
 transform:rotate(-60deg);
 transform-origin:top center;
+
 white-space:nowrap;
 }
 
