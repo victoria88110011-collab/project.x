@@ -198,23 +198,26 @@ const ctx=canvas.getContext("2d");
 
 ctx.setTransform(dpr,0,0,dpr,0,0);
 
-const pad=60;
-const W=rect.width-pad*2;
-const H=rect.height-pad*2;
+const padTop = 40
+const padSide = 40
+const labelSpace = 120   // место под имена
 
+const W = rect.width - padSide*2
+const H = rect.height - padTop - labelSpace
+  
 const n=items.length;
 const gap=10;
 
 const barW=Math.floor((W-gap*(n-1))/n);
 
-let x=pad;
-
+let x = padSide;
+  
 items.forEach(it=>{
 
 const h=H*(it.value/max);
 
-const y=rect.height-pad-h;
-
+const y = padTop + (H - h)
+  
 draw3DBar(ctx,x,y,barW,h,colorForName(it.name));
 
 ctx.fillStyle="#000";
