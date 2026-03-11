@@ -51,21 +51,19 @@ display:block;
 }
 
 .xlabels{
-display:flex;
-justify-content:center;
+display:grid;
+grid-auto-flow:column;
+justify-content:stretch;
 align-items:flex-start;
-gap:8px;
-padding-top:30px;
 }
 
 .xlabel{
-width:72px;
 text-align:center;
 font-weight:900;
-font-size:45px;
-
-transform-origin: bottom center;
-transform: translate(-24px, 28px) rotate(-60deg);
+font-size:32px;
+transform:rotate(-60deg);
+transform-origin:top center;
+white-space:nowrap;
 }
 
 .targetLabel{
@@ -182,6 +180,7 @@ container.innerHTML=`
 const canvas=container.querySelector("canvas");
 const labels=container.querySelector(".xlabels");
 
+labels.style.gridTemplateColumns=`repeat(${items.length},1fr)`;
 labels.innerHTML=items.map(i=>`<div class="xlabel">${i.name}</div>`).join("");
 
 function draw(){
