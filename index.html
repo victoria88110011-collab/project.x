@@ -200,10 +200,8 @@ return nice*exp
 function renderChart(rows){
 
 const items=rows.map(r=>({
-
 name:r[0],
 value:toNumber(r[1])
-
 }))
 
 items.sort((a,b)=>b.value-a.value)
@@ -212,17 +210,10 @@ const maxData=Math.max(...items.map(x=>x.value))
 const axisMax=niceMax(maxData)
 
 chart.innerHTML=`
-
 <div class="vwrap">
-
 <div class="plot">
 <canvas></canvas>
 </div>
-
-<div class="xlabels">
-${items.map(i=>`<div class="xlabel">${i.name}</div>`).join("")}
-</div>
-
 </div>
 `
 
@@ -242,16 +233,15 @@ canvas.style.height=rect.height+"px"
 const ctx=canvas.getContext("2d")
 ctx.setTransform(dpr,0,0,dpr,0,0)
 
-const padL = 20
-const padR = 20
-const padT = 20
-const padB = 110
+const padL = 40
+const padR = 40
+const padT = 40
+const padB = 140
 
 const W=rect.width-padL-padR
 const H=rect.height-padT-padB
 
 const gap=18
-
 const barW=(W-gap*(items.length-1))/items.length
 
 let startX=padL
@@ -267,16 +257,28 @@ const y=padT+(H-h)
 ctx.fillStyle="#1f2937"
 ctx.fillRect(x,y,barW,h)
 
+/* значение сверху */
+
 ctx.fillStyle="#000"
 ctx.font="bold 40px Arial"
 ctx.textAlign="center"
+ctx.fillText(it.value,x+barW/2,y-10)
 
-ctx.fillText(it.value,x+barW/2,y-6)
+/* имя снизу */
+
+ctx.save()
+
+ctx.translate(x+barW/2,padT+H+70)
+ctx.rotate(-Math.PI/3)
+
+ctx.font="bold 36px Arial"
+ctx.fillText(it.name,0,0)
+
+ctx.restore()
 
 })
 
 }
-
 async function load(){
 
 try{
