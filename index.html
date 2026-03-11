@@ -1,350 +1,271 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>TV Payments</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <style>
-    html, body{
-      margin:0; padding:0;
-      width:100vw; height:100vh;
-      overflow:hidden;
-      background:#fff;
-      font-family: Arial, sans-serif;
-    }
+<title>Agent Dashboard</title>
 
-    .wrap{ height:100vh; display:flex; flex-direction:column; }
+<style>
 
-    .topbar{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      padding:14px 18px;
-      border-bottom:1px solid #eee;
-    }
-    .title{ font-size:22px; font-weight:800; }
-    .status{ font-size:16px; opacity:.75; white-space:nowrap; }
+html,body{
+margin:0;
+padding:0;
+width:100vw;
+height:100vh;
+overflow:hidden;
+font-family:Arial, sans-serif;
+background:#fff;
+}
 
-    .grid{
-      flex:1;
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap:18px;
-      padding:14px 18px;
-      box-sizing:border-box;
-      min-height:0;
-    }
+.wrap{
+width:100%;
+height:100%;
+display:flex;
+flex-direction:column;
+}
 
-    .card{
-      border:1px solid #eee;
-      border-radius:14px;
-      padding:14px;
-      box-sizing:border-box;
-      min-height:0;
-      overflow:hidden;
-      display:flex;
-      flex-direction:column;
-    }
+.topbar{
+padding:14px 20px;
+display:flex;
+justify-content:space-between;
+border-bottom:1px solid #eee;
+}
 
-    .card h2{
-      margin:0 0 12px 0;
-      font-size:60px;
-      font-weight:900;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      gap:12px;
-      padding:10px 12px;
-      border-radius:12px;
-      border:1px solid #eaeaea;
-    }
+.title{
+font-size:22px;
+font-weight:800;
+}
 
-    .hReceived{ background:#5f8f50; color:#000; }
-    .hPending{ background:#eaa0a0; color:#000; }
+.status{
+font-size:16px;
+opacity:.7;
+}
 
-    .tableWrap{
-      flex:1 1 auto;
-      min-height:0;
-      overflow:auto;
-      border-radius:14px;
-      border:1px solid #eee;
-    }
+.chart{
+flex:1;
+padding:20px;
+box-sizing:border-box;
+}
 
-    table{
-      width:100%;
-      border-collapse:separate;
-      border-spacing:0;
-      text-align:center;
-      font-weight:900;
-      font-size:55px;
-    }
+.plot{
+position:relative;
+width:100%;
+height:100%;
+border:1px solid #eee;
+border-radius:14px;
+overflow:hidden;
+background:
+linear-gradient(to bottom, rgba(0,0,0,.07) 1px, transparent 1px);
+background-size:100% 20%;
+}
 
-    thead th{
-      position:sticky;
-      top:0;
-      z-index:2;
-      background:#f5f5f5;
-      border-bottom:2px solid #e5e7eb;
-      padding:14px 10px;
-      font-size:55px;
-    }
+canvas{
+width:100%;
+height:100%;
+display:block;
+}
 
-    tbody td{
-      padding:14px 10px;
-      border-bottom:1px solid #eee;
-      background:#fff;
-    }
-
-    tbody tr:hover td{ background:#fafafa; }
-
-    .colName{ width:45%; font-size: 55px;}
-    .colAmount{ width:30%; font-variant-numeric: tabular-nums; font-size: 55px;}
-    .colDate{ width:25%; font-variant-numeric: tabular-nums; font-size: 55px;}
-
-    .muted{ opacity:.6; font-weight:700; }
-
-    @media (max-width: 980px){
-      body{ overflow:auto; }
-      .grid{ grid-template-columns: 1fr; height:auto; }
-      .wrap{ height:auto; min-height:100vh; }
-      .tableWrap{ max-height: 55vh; }
-    }
-
-    /* подсветка Pending если Incomplete */
-    tr.rowIncomplete td { background:#fff3b0 !important; }
-
-  </style>
+</style>
 </head>
 
 <body>
+
 <div class="wrap">
-  <div class="topbar">
-    <div class="title">TV Payments</div>
-    <div class="status" id="status">Загрузка…</div>
-  </div>
 
-  <div class="grid">
-    <div class="card">
-      <h2 class="hReceived">RECEIVED this month ✅</h2>
-      <div class="tableWrap" id="receivedWrap"></div>
-    </div>
+<div class="topbar">
+<div class="title">Agent statistics</div>
+<div class="status" id="status">Загрузка…</div>
+</div>
 
-    <div class="card">
-      <h2 class="hPending">PENDING ⏳</h2>
-      <div class="tableWrap" id="pendingWrap"></div>
-    </div>
-  </div>
+<div class="chart">
+<div class="plot">
+<canvas id="chart"></canvas>
+</div>
+</div>
+
 </div>
 
 <script>
-  // === CONFIG ===
-  const SPREADSHEET_ID = "1d801Kn2bLsQeg4ftU3oeWQXgvA6B5GsGkjzEwjeh1b8";
-  const SHEET_NAME = "TV";           // лист TV
-  const REFRESH_MS = 90000;
 
-  // Диапазоны:
-  // RECEIVED: C:E  (Name, Amount)
-  // PENDING:  H:J  (Name, Amount, Date)
-  const RANGES = {
-    received: "C2:E",
-    pending:  "I2:L"
-  };
+const SPREADSHEET_ID = "1d801Kn2bLsQeg4ftU3oeWQXgvA6B5GsGkjzEwjeh1b8"
+const GID = "119792443"
+const RANGE = "C3:D19"
 
-  const statusEl = document.getElementById("status");
-  const receivedWrap = document.getElementById("receivedWrap");
-  const pendingWrap = document.getElementById("pendingWrap");
+const REFRESH_MS = 90000
 
-  // === HELPERS ===
-  function esc(s) {
-    return String(s ?? "")
-      .replaceAll("&","&amp;")
-      .replaceAll("<","&lt;")
-      .replaceAll(">","&gt;")
-      .replaceAll('"',"&quot;")
-      .replaceAll("'","&#039;");
-  }
+const statusEl = document.getElementById("status")
+const canvas = document.getElementById("chart")
 
-  function toNumber(v) {
-    // поддерживает "33 500,00" и "33500.00"
-    const s = String(v ?? "")
-      .replace(/\s/g, "")
-      .replace(",", ".");
-    const n = Number(s);
-    return Number.isFinite(n) ? n : null;
-  }
+function csvUrl(){
+return `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=csv&gid=${GID}&range=${RANGE}&t=${Date.now()}`
+}
 
-  function formatAmount(v) {
-    const n = toNumber(v);
-    if (n === null) return String(v ?? "").trim();
-    // без копеек если они нули, иначе оставляем 2 знака
-    const hasCents = Math.round(n * 100) % 100 !== 0;
-    return n.toLocaleString("ru-RU", {
-      minimumFractionDigits: hasCents ? 2 : 0,
-      maximumFractionDigits: 2
-    });
-  }
+function parseCSV(text){
 
-  function csvUrl(sheetName, rangeA1) {
-    // ВАЖНО: range включает имя листа: TV!C2:D
-    const range = `${sheetName}!${rangeA1}`;
-    return `https://docs.google.com/spreadsheets/d/${encodeURIComponent(SPREADSHEET_ID)}/gviz/tq?tqx=out:csv&range=${encodeURIComponent(range)}&t=${Date.now()}`;
-  }
+if(text.charCodeAt(0)===0xFEFF) text=text.slice(1)
 
-  function parseCSV(text) {
-    if (text && text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+const rows=[]
+let row=[]
+let cell=""
+let inQuotes=false
 
-    const rows = [];
-    let row = [];
-    let cell = "";
-    let inQuotes = false;
+for(let i=0;i<text.length;i++){
 
-    for (let i = 0; i < text.length; i++) {
-      const ch = text[i];
-      const next = text[i + 1];
+const ch=text[i]
+const next=text[i+1]
 
-      if (ch === '"' && inQuotes && next === '"') { cell += '"'; i++; continue; }
-      if (ch === '"') { inQuotes = !inQuotes; continue; }
+if(ch=='"' && inQuotes && next=='"'){cell+='"';i++;continue}
+if(ch=='"'){inQuotes=!inQuotes;continue}
 
-      if (ch === "\n" && !inQuotes) {
-        row.push(cell); rows.push(row);
-        row = []; cell = "";
-        continue;
-      }
-      if (ch === "\r") continue;
+if(ch=="\n" && !inQuotes){
+row.push(cell)
+rows.push(row)
+row=[]
+cell=""
+continue
+}
 
-      if (ch === "," && !inQuotes) { row.push(cell); cell = ""; continue; }
-      cell += ch;
-    }
-    row.push(cell); rows.push(row);
+if(ch=="\r")continue
 
-    // чистим пустые строки
-    return rows
-      .map(r => (r || []).map(v => (v ?? "").trim()))
-      .filter(r => r.some(x => x !== ""));
-  }
+if(ch=="," && !inQuotes){
+row.push(cell)
+cell=""
+continue
+}
 
-  function buildTable(headers, rows, colClasses = [], rowClassFn = null, renderCols = null) {
-    const cols = renderCols ?? headers.length;
-  
-    const thead = `
-      <thead>
-        <tr>
-          ${headers.slice(0, cols).map((h, i) => `<th class="${esc(colClasses[i] || "")}">${esc(h)}</th>`).join("")}
-        </tr>
-      </thead>
-    `;
-  
-    const tbody = rows.length
-      ? `<tbody>
-          ${rows.map(r => {
-            const rowClass = rowClassFn ? (rowClassFn(r) || "") : "";
-            const cells = (r || []).slice(0, cols);
-            return `
-              <tr class="${esc(rowClass)}">
-                ${cells.map((c, i) => `<td class="${esc(colClasses[i] || "")}">${esc(c)}</td>`).join("")}
-              </tr>
-            `;
-          }).join("")}
-        </tbody>`
-      : `<tbody><tr><td colspan="${cols}" class="muted">Нет данных</td></tr></tbody>`;
-  
-    return `<table>${thead}${tbody}</table>`;
-  }
+cell+=ch
+}
 
+row.push(cell)
+rows.push(row)
 
-  function normalizeReceived(rows) {
-    // ожидаем 3 колонки: Name, Sent, Received
-    const data = rows
-      .map(r => [r[0] ?? "", r[1] ?? "", r[2] ?? ""])
-      .filter(r => r.some(x => String(x).trim() !== ""));
-  
-    // если есть заголовок — уберём его (Name / Sent / Received)
-    const first = data[0] || [];
-    if ((first[0] || "").toLowerCase() === "name") {
-      data.shift();
-    }
-  
-    return data.map(r => [
-      String(r[0]).trim(),
-      formatAmount(r[1]),
-      formatAmount(r[2])
-    ]);
-  }
+return rows
+}
 
-  function normalizePending(rows) {
-    // ожидаем 4 колонки: Name, Amount, Date, Status
-    const data = rows
-      .map(r => [r[0] ?? "", r[1] ?? "", r[2] ?? "", r[3] ?? ""])
-      .filter(r => r.some(x => String(x).trim() !== ""));
-  
-    const first = data[0] || [];
-    if ((first[0] || "").toLowerCase() === "name" &&
-        (first[1] || "").toLowerCase() === "amount") {
-      data.shift();
-    }
-  
-    // форматируем, статус оставляем как есть
-    return data.map(r => [
-      String(r[0]).trim(),
-      formatAmount(r[1]),
-      String(r[2]).trim(),
-      String(r[3]).trim()
-    ]);
-  }
+function toNumber(v){
+const s=String(v).replace(/\s/g,"").replace(",",".")
+const n=Number(s)
+return Number.isFinite(n)?n:0
+}
 
+function niceMax(v){
 
-  async function loadAll() {
-    try {
-      statusEl.textContent = "Загрузка…";
+if(v<=0)return 1
 
-      const [receivedText, pendingText] = await Promise.all([
-        fetch(csvUrl(SHEET_NAME, RANGES.received), { cache:"no-store" }).then(r => r.text()),
-        fetch(csvUrl(SHEET_NAME, RANGES.pending),  { cache:"no-store" }).then(r => r.text())
-      ]);
+const exp=Math.pow(10,Math.floor(Math.log10(v)))
+const frac=v/exp
 
-      const receivedRaw = parseCSV(receivedText);
-      const pendingRaw  = parseCSV(pendingText);
+let niceFrac
 
-      const received = normalizeReceived(receivedRaw);
-      const pending  = normalizePending(pendingRaw);
+if(frac<=1)niceFrac=1
+else if(frac<=2)niceFrac=2
+else if(frac<=5)niceFrac=5
+else niceFrac=10
 
-      receivedWrap.innerHTML = buildTable(
-        ["Name", "Sent", "Received"],
-        received,
-        ["colName", "colAmount", "colAmount"]
-      );
+return niceFrac*exp
+}
 
+function draw(){
 
-      pendingWrap.innerHTML = buildTable(
-        ["Name", "Amount", "Date"],
-        pending, // <-- передаём все 4 колонки
-        ["colName", "colAmount", "colDate"],
-        (r) => (String(r[3]).trim().toLowerCase() === "incomplete" ? "rowIncomplete" : ""),
-        3 // <-- рисуем только первые 3 колонки
-      );
+const rect=canvas.parentElement.getBoundingClientRect()
 
+const dpr=window.devicePixelRatio||1
 
+canvas.width=rect.width*dpr
+canvas.height=rect.height*dpr
 
-      statusEl.textContent = "Обновлено: " + new Date().toLocaleTimeString();
-    } catch (e) {
-      const msg = esc(e?.message || String(e));
-      receivedWrap.innerHTML = `<div style="color:#b00020; padding:14px; font-weight:800;">${msg}</div>`;
-      pendingWrap.innerHTML  = `<div style="color:#b00020; padding:14px; font-weight:800;">${msg}</div>`;
-      statusEl.textContent = "Ошибка";
-    }
-  }
+canvas.style.width=rect.width+"px"
+canvas.style.height=rect.height+"px"
 
-  loadAll();
-  setInterval(loadAll, REFRESH_MS);
+const ctx=canvas.getContext("2d")
+ctx.setTransform(dpr,0,0,dpr,0,0)
+
+return ctx
+}
+
+function renderChart(data){
+
+const ctx=draw()
+
+const rect=canvas.getBoundingClientRect()
+
+const pad=60
+
+const W=rect.width-pad*2
+const H=rect.height-pad*2
+
+const max=Math.max(...data.map(d=>d.value))
+const axisMax=niceMax(max)
+
+const gap=18
+const barW=Math.max(20,(W-gap*(data.length-1))/data.length)
+
+let x=pad
+
+data.forEach(it=>{
+
+const pct=it.value/axisMax
+const h=pct*H
+
+const y=pad+H-h
+
+ctx.fillStyle="#1f2937"
+ctx.fillRect(x,y,barW,h)
+
+ctx.fillStyle="#000"
+ctx.font="bold 20px Arial"
+ctx.textAlign="center"
+
+ctx.fillText(it.value,x+barW/2,y-6)
+
+ctx.save()
+ctx.translate(x+barW/2,pad+H+10)
+ctx.rotate(-Math.PI/3)
+ctx.fillText(it.name,0,0)
+ctx.restore()
+
+x+=barW+gap
+
+})
+
+}
+
+async function load(){
+
+try{
+
+statusEl.textContent="Загрузка..."
+
+const text=await fetch(csvUrl(),{cache:"no-store"}).then(r=>r.text())
+
+const rows=parseCSV(text)
+
+const data=rows.map(r=>({
+name:r[0],
+value:toNumber(r[1])
+}))
+
+data.sort((a,b)=>b.value-a.value)
+
+renderChart(data)
+
+statusEl.textContent="Обновлено: "+new Date().toLocaleTimeString()
+
+}catch(e){
+
+statusEl.textContent="Ошибка"
+
+}
+
+}
+
+load()
+setInterval(load,REFRESH_MS)
+
+window.addEventListener("resize",load)
+
 </script>
+
 </body>
 </html>
-
-
-
-
-
-
-
-
