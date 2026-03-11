@@ -70,7 +70,7 @@ flex:1;
 .vwrap{
 height:100%;
 display:grid;
-grid-template-rows: 1fr 120px;
+grid-template-rows: 1fr 150px;
 gap:8px;
 }
 
@@ -243,10 +243,10 @@ canvas.style.height=rect.height+"px"
 const ctx=canvas.getContext("2d")
 ctx.setTransform(dpr,0,0,dpr,0,0)
 
-const padL=20
-const padR=20
-const padT=20
-const padB=40
+const padL = 20
+const padR = 20
+const padT = 20
+const padB = 110
 
 const W=rect.width-padL-padR
 const H=rect.height-padT-padB
