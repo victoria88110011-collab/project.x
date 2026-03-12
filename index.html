@@ -67,7 +67,8 @@ justify-content:center;
 align-items:flex-start;
 
 font-weight:900;
-font-size:40px;
+
+font-size:clamp(12px, 2.2vw, 32px);
 
 transform:rotate(-60deg);
 transform-origin:top center;
@@ -205,36 +206,38 @@ canvas.style.width=rect.width+"px";
 canvas.style.height=rect.height+"px";
 
 const ctx=canvas.getContext("2d");
-
 ctx.setTransform(dpr,0,0,dpr,0,0);
 
-const padTop = 40
-const padSide = 40
-const labelSpace = 120   // место под имена
+const padSide = rect.width * 0.03;
+const padTop  = rect.height * 0.08;
 
-const W = rect.width - padSide*2
-const H = rect.height - padTop - labelSpace
-  
-const n=items.length;
-const gap=10;
+const labelSpace = rect.height * 0.20;
 
-const barW=Math.floor((W-gap*(n-1))/n);
+const valueFont = Math.max(14, rect.width * 0.02);
+
+const W = rect.width - padSide*2;
+const H = rect.height - padTop - labelSpace;
+
+const n = items.length;
+
+const gap = Math.max(6, rect.width * 0.005);
+
+const barW = (W-gap*(n-1))/n;
 
 let x = padSide;
-  
+
 items.forEach(it=>{
 
-const h=H*(it.value/max);
+const h = H*(it.value/max);
+const y = padTop + (H - h);
 
-const y = padTop + (H - h)
-  
 draw3DBar(ctx,x,y,barW,h,colorForName(it.name));
 
 ctx.fillStyle="#000";
-ctx.font="bold 40px Arial";
+ctx.font=`bold ${valueFont}px Arial`;
 ctx.textAlign="center";
 
-ctx.fillText(it.value,x+barW/2,y-8);
+ctx.fillText(it.value,x+barW/2,y-6);
 
 x+=barW+gap;
 
