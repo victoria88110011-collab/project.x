@@ -18,17 +18,17 @@ background:#fff;
 font-family:Arial,sans-serif;
 }
 
-/* теперь диаграмма занимает весь экран */
 .chartHost{
 width:100vw;
 height:100vh;
 }
 
 /* ==== Chart wrapper ==== */
+
 .vwrap{
 height:100%;
 display:grid;
-grid-template-rows: 22px 2.2fr 1.3fr;
+grid-template-rows: 22px 2fr 1fr;
 gap:8px;
 padding:20px;
 box-sizing:border-box;
@@ -42,7 +42,6 @@ font-size:15px;
 opacity:.75;
 padding:0 6px;
 white-space:nowrap;
-user-select:none;
 }
 
 .plot{
@@ -70,8 +69,6 @@ color:#e11d48;
 background:rgba(255,255,255,.92);
 padding:2px 6px;
 border-radius:999px;
-white-space:nowrap;
-pointer-events:none;
 }
 
 .targetLine{
@@ -81,36 +78,27 @@ right:0;
 height:2px;
 background:#e11d48;
 opacity:.85;
-pointer-events:none;
 }
 
 /* ==== Labels ==== */
 
 .xlabels{
-display:grid;
-grid-auto-flow:column;
+display:flex;
 justify-content:center;
-align-items:center;
-column-gap:40px;
-padding-top:28px;
+gap:8px;
+padding:6px 10px 0 10px;
 }
 
 .xlabel{
-width:72px;
+display:block;
 text-align:center;
+white-space:nowrap;
 font-weight:900;
-font-size:45px;
+font-size:55px;
+line-height:1.05;
 
-transform-origin:bottom center;
-transform:translate(-24px,28px) rotate(-60deg);
-
-user-select:none;
-}
-
-.chartHost,
-.plot,
-.vwrap{
-min-width:0;
+transform:translate(-12px,10px) rotate(-60deg);
+transform-origin:center;
 }
 
 </style>
@@ -131,23 +119,22 @@ const REFRESH_MS=90000;
 const MAKE_SMALL_VALUES_VISIBLE=true;
 const MIN_VISIBLE_PCT=1.2;
 
-const RANGE="C2:D8";
+const RANGE="G2:H28";
 
 const chart=document.getElementById("chart");
 
 function csvUrl(range){
-return`https://docs.google.com/spreadsheets/d/${encodeURIComponent(SPREADSHEET_ID)}/export?format=csv&gid=${encodeURIComponent(GID)}&range=${encodeURIComponent(range)}&t=${Date.now()}`;
+return `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=csv&gid=${GID}&range=${range}&t=${Date.now()}`;
 }
 
 function parseCSV(text){
-if(text&&text.charCodeAt(0)===0xFEFF)text=text.slice(1);
-
 const rows=[];
 let row=[];
 let cell="";
 let inQuotes=false;
 
 for(let i=0;i<text.length;i++){
+
 const ch=text[i];
 const next=text[i+1];
 
@@ -178,7 +165,7 @@ rows.push(row);
 
 return rows
 .map(r=>(r||[]).map(v=>(v??"").trim()))
-.filter(r=>r.length>=2&&!(r[0]==""&&r[1]==""));
+.filter(r=>r.length>=2);
 }
 
 function toNumber(v){
@@ -187,28 +174,16 @@ const n=Number(s);
 return Number.isFinite(n)?n:0;
 }
 
-function esc(s){
-return String(s??"")
-.replaceAll("&","&amp;")
-.replaceAll("<","&lt;")
-.replaceAll(">","&gt;")
-.replaceAll('"',"&quot;")
-.replaceAll("'","&#039;");
-}
-
 function hashString(s){
-s=String(s??"");
 let h=2166136261;
-
 for(let i=0;i<s.length;i++){
 h^=s.charCodeAt(i);
 h=Math.imul(h,16777619);
 }
-
 return h>>>0;
 }
 
-const PALETTE=[
+const COLORS=[
 "#1f2937",
 "#334155",
 "#0f766e",
@@ -220,11 +195,10 @@ const PALETTE=[
 ];
 
 function colorForName(name){
-return PALETTE[hashString(name)%PALETTE.length];
+return COLORS[hashString(name)%COLORS.length];
 }
 
 function niceMax(v){
-
 if(v<=0)return 1;
 
 const exp=Math.pow(10,Math.floor(Math.log10(v)));
@@ -266,13 +240,11 @@ ctx.lineTo(x+w+depth,y-top);
 ctx.closePath();
 ctx.fill();
 
-ctx.fillStyle="rgba(0,0,0,0.12)";
-ctx.fillRect(x,y+h,w,6);
 }
 
 function renderChart(pairs){
 
-let items=pairs.map(r=>({name:r[0]??"",value:toNumber(r[1])}));
+let items=pairs.map(r=>({name:r[0],value:toNumber(r[1])}));
 
 items.sort((a,b)=>b.value-a.value);
 
@@ -289,16 +261,14 @@ chart.innerHTML=`
 <div class="plot">
 
 <div class="targetLine" style="bottom:${targetPct}%"></div>
-<div class="targetLabel" style="bottom:${targetPct}%;transform:translateY(50%)">
-ЦЕЛЬ ${TARGET}
-</div>
+<div class="targetLabel" style="bottom:${targetPct}%">ЦЕЛЬ ${TARGET}</div>
 
 <canvas></canvas>
 
 </div>
 
 <div class="xlabels">
-${items.map(it=>`<div class="xlabel">${esc(it.name)}</div>`).join("")}
+${items.map(it=>`<div class="xlabel">${it.name}</div>`).join("")}
 </div>
 
 </div>
@@ -310,12 +280,6 @@ const canvas=chart.querySelector("canvas");
 function redraw(){
 
 const rect=plot.getBoundingClientRect();
-
-if(rect.width===0 || rect.height===0){
-requestAnimationFrame(redraw);
-return;
-}
-
 const dpr=window.devicePixelRatio||1;
 
 canvas.width=rect.width*dpr;
@@ -335,18 +299,16 @@ const W=rect.width-padL-padR;
 const H=rect.height-padT-padB;
 
 const n=items.length;
-const gap=40;
-const barW=72;
+const gap=8;
+const barW=Math.max(10,Math.floor((W-gap*(n-1))/n));
 
 const totalW=n*barW+(n-1)*gap;
 
-let startX=padL+Math.max(0,(W-totalW)/2);
+let startX=padL+(W-totalW)/2;
 
 items.forEach((it,i)=>{
 
-const rawPct=(it.value/axisMax)*100;
-
-let pct=Math.max(0,Math.min(100,rawPct));
+let pct=(it.value/axisMax)*100;
 
 if(MAKE_SMALL_VALUES_VISIBLE&&it.value>0){
 pct=Math.max(pct,MIN_VISIBLE_PCT);
@@ -361,31 +323,22 @@ ctx.fillStyle="#000";
 ctx.font="800 50px Arial";
 ctx.textAlign="center";
 
-ctx.fillText(String(it.value),x+barW/2,Math.max(12,y-6));
-
-if(it.value<=0){
-
-ctx.fillStyle=colorForName(it.name);
-ctx.fillRect(x,padT+H-2,barW,2);
-
-}else{
+ctx.fillText(it.value,x+barW/2,y-6);
 
 draw3DBar(ctx,x,y,barW,h,colorForName(it.name));
-
-}
 
 });
 
 }
 
 redraw();
-window.addEventListener("resize",redraw,{passive:true});
+window.addEventListener("resize",redraw);
 
 }
 
 async function load(){
 
-const text=await fetch(csvUrl(RANGE),{cache:"no-store"}).then(r=>r.text());
+const text=await fetch(csvUrl(RANGE)).then(r=>r.text());
 
 const data=parseCSV(text);
 
