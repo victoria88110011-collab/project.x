@@ -85,19 +85,20 @@ opacity:.85;
 .xlabels{
 display:flex;
 justify-content:center;
+align-items:center;
 gap:8px;
 padding:6px 10px 0 10px;
 }
 
 .xlabel{
-display:block;
+width:0;
+flex:1;
 text-align:center;
 white-space:nowrap;
 font-weight:900;
 font-size:55px;
-line-height:1.05;
 
-transform:translate(-12px,10px) rotate(-60deg);
+transform: translate(-12px,10px) rotate(-60deg);
 transform-origin:center;
 }
 
@@ -274,6 +275,7 @@ ${items.map(it=>`<div class="xlabel">${it.name}</div>`).join("")}
 </div>
 `;
 
+const labelsEl = chart.querySelector(".xlabels");
 const plot=chart.querySelector(".plot");
 const canvas=chart.querySelector("canvas");
 
