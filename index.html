@@ -28,7 +28,7 @@ height:100vh;
 .vwrap{
 height:100%;
 display:grid;
-grid-template-rows: 22px 2fr 1fr;
+grid-template-rows: 60px 2fr 1fr;
 gap:8px;
 padding:20px;
 box-sizing:border-box;
@@ -36,12 +36,10 @@ box-sizing:border-box;
 
 .cap{
 display:flex;
-justify-content:space-between;
+justify-content:center;
 align-items:center;
-font-size:15px;
-opacity:.75;
-padding:0 6px;
-white-space:nowrap;
+font-size:48px;
+font-weight:900;
 }
 
 .plot{
@@ -97,7 +95,6 @@ text-align:center;
 white-space:nowrap;
 font-weight:900;
 font-size:55px;
-
 transform: translate(-12px,10px) rotate(-60deg);
 transform-origin:center;
 }
@@ -129,6 +126,7 @@ return `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=c
 }
 
 function parseCSV(text){
+
 const rows=[];
 let row=[];
 let cell="";
@@ -159,6 +157,7 @@ continue;
 }
 
 cell+=ch;
+
 }
 
 row.push(cell);
@@ -167,6 +166,7 @@ rows.push(row);
 return rows
 .map(r=>(r||[]).map(v=>(v??"").trim()))
 .filter(r=>r.length>=2);
+
 }
 
 function toNumber(v){
@@ -200,6 +200,7 @@ return COLORS[hashString(name)%COLORS.length];
 }
 
 function niceMax(v){
+
 if(v<=0)return 1;
 
 const exp=Math.pow(10,Math.floor(Math.log10(v)));
@@ -213,6 +214,7 @@ else if(frac<=5)niceFrac=5;
 else niceFrac=10;
 
 return niceFrac*exp;
+
 }
 
 function draw3DBar(ctx,x,y,w,h,color){
@@ -249,6 +251,10 @@ let items=pairs.map(r=>({name:r[0],value:toNumber(r[1])}));
 
 items.sort((a,b)=>b.value-a.value);
 
+/* ==== TOTAL ==== */
+
+const total = items.reduce((s,i)=>s+i.value,0);
+
 const maxData=Math.max(0,...items.map(x=>x.value));
 const axisMax=niceMax(maxData||1);
 
@@ -257,7 +263,9 @@ const targetPct=(TARGET/axisMax)*100;
 chart.innerHTML=`
 <div class="vwrap">
 
-<div class="cap"></div>
+<div class="cap">
+TOTAL ${total.toLocaleString()}
+</div>
 
 <div class="plot">
 
@@ -275,7 +283,6 @@ ${items.map(it=>`<div class="xlabel">${it.name}</div>`).join("")}
 </div>
 `;
 
-const labelsEl = chart.querySelector(".xlabels");
 const plot=chart.querySelector(".plot");
 const canvas=chart.querySelector("canvas");
 
@@ -352,5 +359,6 @@ load();
 setInterval(load,REFRESH_MS);
 
 </script>
+
 </body>
 </html>
