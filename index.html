@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>Bonus Chart</title>
 
@@ -19,24 +19,29 @@ font-family:Arial,sans-serif;
 }
 
 .chartHost{
-width:100vw;
-height:100vh;
+width:100%;
+height:100%;
 }
 
+/* главный контейнер */
+
 .vwrap{
+width:100%;
 height:100%;
 display:grid;
-grid-template-rows:22px 2fr 1fr;
-gap:8px;
+grid-template-rows:75% 25%;
 padding:20px;
 box-sizing:border-box;
 }
+
+/* график */
 
 .plot{
 position:relative;
 border:1px solid #eee;
 border-radius:12px;
 overflow:hidden;
+
 background:
 linear-gradient(to bottom, rgba(0,0,0,.08) 1px, transparent 1px);
 background-size:100% 20%;
@@ -47,6 +52,41 @@ width:100%;
 height:100%;
 display:block;
 }
+
+/* подписи */
+
+.xlabels{
+
+display:grid;
+grid-auto-flow:column;
+grid-auto-columns:1fr;
+
+align-items:start;
+justify-items:center;
+
+height:100%;
+overflow:hidden;
+
+padding-top:10px;
+}
+
+.xlabel{
+
+display:flex;
+justify-content:center;
+align-items:flex-start;
+
+font-weight:900;
+
+font-size:clamp(14px,1.6vw,28px);
+
+transform:rotate(-60deg);
+transform-origin:top center;
+
+white-space:nowrap;
+}
+
+/* цель */
 
 .targetLabel{
 position:absolute;
@@ -65,27 +105,6 @@ left:0;
 right:0;
 height:2px;
 background:#e11d48;
-opacity:.85;
-}
-
-/* labels */
-
-.xlabels{
-display:grid;
-justify-content:center;
-align-items:flex-start;
-padding-top:6px;
-}
-
-.xlabel{
-text-align:center;
-white-space:nowrap;
-font-weight:900;
-font-size:55px;
-transform:rotate(-60deg);
-transform-origin:top center;
-overflow:hidden;
-text-overflow:ellipsis;
 }
 
 </style>
@@ -97,128 +116,50 @@ text-overflow:ellipsis;
 
 <script>
 
-const SPREADSHEET_ID="130is9FQRGEP7nf-tLVPwi1VGCtvRGW4mkpJcEo5T_fc";
-const GID="41203482";
+const SPREADSHEET_ID="1d801Kn2bLsQeg4ftU3oeWQXgvA6B5GsGkjzEwjeh1b8";
+const GID="119792443";
+const RANGE="C3:D19";
 
 const TARGET=150000;
-const REFRESH_MS=90000;
-
-const RANGE="J3:K25";
-
-const MAKE_SMALL_VALUES_VISIBLE=true;
-const MIN_VISIBLE_PCT=1.2;
-
-const chart=document.getElementById("chart");
 
 function csvUrl(range){
 return `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=csv&gid=${GID}&range=${range}&t=${Date.now()}`;
 }
 
 function parseCSV(text){
-
-const rows=[];
-let row=[];
-let cell="";
-let inQuotes=false;
-
-for(let i=0;i<text.length;i++){
-
-const ch=text[i];
-const next=text[i+1];
-
-if(ch=='"'&&inQuotes&&next=='"'){cell+='"';i++;continue;}
-if(ch=='"'){inQuotes=!inQuotes;continue;}
-
-if(ch=="\n"&&!inQuotes){
-row.push(cell);
-rows.push(row);
-row=[];
-cell="";
-continue;
-}
-
-if(ch=="\r")continue;
-
-if(ch==","&&!inQuotes){
-row.push(cell);
-cell="";
-continue;
-}
-
-cell+=ch;
-
-}
-
-row.push(cell);
-rows.push(row);
-
-return rows
-.map(r=>r.map(v=>v.trim()))
-.filter(r=>r.length>=2);
-
+return text.split("\n").map(r=>r.split(",")).filter(r=>r.length>=2);
 }
 
 function toNumber(v){
-const s=String(v).replace(/\s/g,"").replace(",",".");
-const n=Number(s);
+const n=Number(String(v).replace(/\s/g,"").replace(",","."));
 return Number.isFinite(n)?n:0;
 }
 
-function hashString(s){
+function colorForName(name){
 
-let h=2166136261;
-
-for(let i=0;i<s.length;i++){
-h^=s.charCodeAt(i);
-h=Math.imul(h,16777619);
-}
-
-return h>>>0;
-
-}
-
-const COLORS=[
-"#1f2937",
-"#334155",
-"#0f766e",
-"#1e40af",
-"#6b21a8",
-"#7c2d12",
-"#065f46",
-"#3f3f46"
+const colors=[
+"#1f2937","#334155","#0f766e","#1e40af",
+"#6b21a8","#7c2d12","#065f46","#3f3f46"
 ];
 
-function colorForName(name){
-return COLORS[hashString(name)%COLORS.length];
-}
+let h=0;
 
-function niceMax(v){
+for(let i=0;i<name.length;i++)
+h+=name.charCodeAt(i);
 
-if(v<=0)return 1;
-
-const exp=Math.pow(10,Math.floor(Math.log10(v)));
-const frac=v/exp;
-
-let niceFrac;
-
-if(frac<=1)niceFrac=1;
-else if(frac<=2)niceFrac=2;
-else if(frac<=5)niceFrac=5;
-else niceFrac=10;
-
-return niceFrac*exp;
+return colors[h%colors.length];
 
 }
 
 function draw3DBar(ctx,x,y,w,h,color){
 
-const depth=Math.min(10,Math.max(4,w*0.18));
-const top=Math.min(10,Math.max(4,w*0.18));
+const depth=8;
+const top=8;
 
 ctx.fillStyle=color;
 ctx.fillRect(x,y,w,h);
 
-ctx.fillStyle="rgba(255,255,255,0.28)";
+ctx.fillStyle="rgba(255,255,255,.25)";
 ctx.beginPath();
 ctx.moveTo(x,y);
 ctx.lineTo(x+top,y-top);
@@ -227,7 +168,7 @@ ctx.lineTo(x+w-top,y);
 ctx.closePath();
 ctx.fill();
 
-ctx.fillStyle="rgba(0,0,0,0.18)";
+ctx.fillStyle="rgba(0,0,0,.18)";
 ctx.beginPath();
 ctx.moveTo(x+w,y);
 ctx.lineTo(x+w,y+h);
@@ -238,45 +179,44 @@ ctx.fill();
 
 }
 
-function renderChart(pairs){
+function renderChart(container,data){
 
-let items=pairs.map(r=>({name:r[0],value:toNumber(r[1])}));
+const items=data.map(r=>({
+name:r[0],
+value:toNumber(r[1])
+})).sort((a,b)=>b.value-a.value);
 
-items.sort((a,b)=>b.value-a.value);
+const max=Math.max(...items.map(x=>x.value),1);
 
-const maxData=Math.max(0,...items.map(x=>x.value));
-const axisMax=niceMax(maxData||1);
+container.innerHTML=`
 
-const targetPct=(TARGET/axisMax)*100;
-
-chart.innerHTML=`
 <div class="vwrap">
-
-<div></div>
 
 <div class="plot">
 
-<div class="targetLine" style="bottom:${targetPct}%"></div>
-<div class="targetLabel" style="bottom:${targetPct}%">ЦЕЛЬ ${TARGET}</div>
+<div class="targetLine" style="bottom:${TARGET/max*100}%"></div>
+<div class="targetLabel" style="bottom:${TARGET/max*100}%">ЦЕЛЬ ${TARGET}</div>
 
 <canvas></canvas>
 
 </div>
 
-<div class="xlabels">
-${items.map(it=>`<div class="xlabel">${it.name}</div>`).join("")}
-</div>
+<div class="xlabels"></div>
 
 </div>
 `;
 
-const labelsEl = chart.querySelector(".xlabels");
-const plot=chart.querySelector(".plot");
-const canvas=chart.querySelector("canvas");
+const canvas=container.querySelector("canvas");
+const labels=container.querySelector(".xlabels");
 
-function redraw(){
+labels.style.gridTemplateColumns=`repeat(${items.length},1fr)`;
 
-const rect=plot.getBoundingClientRect();
+labels.innerHTML=items.map(i=>`<div class="xlabel">${i.name}</div>`).join("");
+
+function draw(){
+
+const rect=canvas.parentElement.getBoundingClientRect();
+
 const dpr=window.devicePixelRatio||1;
 
 canvas.width=rect.width*dpr;
@@ -288,52 +228,45 @@ canvas.style.height=rect.height+"px";
 const ctx=canvas.getContext("2d");
 
 ctx.setTransform(dpr,0,0,dpr,0,0);
-ctx.clearRect(0,0,rect.width,rect.height);
 
-const padL=14,padR=22,padT=14,padB=22;
+const padSide=40;
+const padTop=20;
 
-const W=rect.width-padL-padR;
-const H=rect.height-padT-padB;
+const W=rect.width-padSide*2;
+const H=rect.height-padTop;
 
 const n=items.length;
-const gap=8;
 
-const barW=Math.max(10,Math.floor((W-gap*(n-1))/n));
-const totalW=n*barW+(n-1)*gap;
+const gap=10;
 
-labelsEl.style.gridTemplateColumns=`repeat(${n}, ${barW}px)`;
-labelsEl.style.columnGap=gap+"px";
-labelsEl.style.width=totalW+"px";
+const barW=(W-gap*(n-1))/n;
 
-let startX=padL+(W-totalW)/2;
+let x=padSide;
 
-items.forEach((it,i)=>{
+const valueFont=Math.max(14,rect.width*0.018);
 
-let pct=(it.value/axisMax)*100;
+items.forEach(it=>{
 
-if(MAKE_SMALL_VALUES_VISIBLE && it.value>0){
-pct=Math.max(pct,MIN_VISIBLE_PCT);
-}
+const h=H*(it.value/max);
+const y=padTop+(H-h);
 
-const h=(pct/100)*H;
-
-const x=startX+i*(barW+gap);
-const y=padT+(H-h);
+draw3DBar(ctx,x,y,barW,h,colorForName(it.name));
 
 ctx.fillStyle="#000";
-ctx.font="800 50px Arial";
+ctx.font=`bold ${valueFont}px Arial`;
 ctx.textAlign="center";
 
 ctx.fillText(it.value,x+barW/2,y-6);
 
-draw3DBar(ctx,x,y,barW,h,colorForName(it.name));
+x+=barW+gap;
 
 });
 
 }
 
-redraw();
-window.addEventListener("resize",redraw);
+draw();
+
+window.addEventListener("resize",draw);
 
 }
 
@@ -342,13 +275,13 @@ async function load(){
 const text=await fetch(csvUrl(RANGE)).then(r=>r.text());
 const data=parseCSV(text);
 
-renderChart(data);
+renderChart(document.getElementById("chart"),data);
 
 }
 
 load();
-setInterval(load,REFRESH_MS);
 
 </script>
+
 </body>
 </html>
