@@ -83,22 +83,18 @@ opacity:.85;
 /* ==== Labels ==== */
 
 .xlabels{
-display:flex;
+display:grid;
 justify-content:center;
-align-items:center;
-gap:8px;
+align-items:flex-start;
 padding:6px 10px 0 10px;
 }
 
 .xlabel{
-width:0;
-flex:1;
 text-align:center;
 white-space:nowrap;
 font-weight:900;
 font-size:55px;
-
-transform: translate(-12px,10px) rotate(-60deg);
+transform: translateY(10px) rotate(-60deg);
 transform-origin:center;
 }
 
@@ -303,6 +299,10 @@ const H=rect.height-padT-padB;
 const n=items.length;
 const gap=8;
 const barW=Math.max(10,Math.floor((W-gap*(n-1))/n));
+
+labelsEl.style.gridTemplateColumns = `repeat(${n}, ${barW}px)`;
+labelsEl.style.columnGap = gap + "px";
+labelsEl.style.width = totalW + "px";
 
 const totalW=n*barW+(n-1)*gap;
 
