@@ -23,25 +23,13 @@ width:100vw;
 height:100vh;
 }
 
-/* ==== Chart wrapper ==== */
-
 .vwrap{
 height:100%;
 display:grid;
-grid-template-rows: 22px 2fr 1fr;
+grid-template-rows:22px 2fr 1fr;
 gap:8px;
 padding:20px;
 box-sizing:border-box;
-}
-
-.cap{
-display:flex;
-justify-content:space-between;
-align-items:center;
-font-size:15px;
-opacity:.75;
-padding:0 6px;
-white-space:nowrap;
 }
 
 .plot{
@@ -80,13 +68,13 @@ background:#e11d48;
 opacity:.85;
 }
 
-/* ==== Labels ==== */
+/* labels */
 
 .xlabels{
 display:grid;
 justify-content:center;
 align-items:flex-start;
-padding:6px 10px 0 10px;
+padding-top:6px;
 }
 
 .xlabel{
@@ -94,8 +82,10 @@ text-align:center;
 white-space:nowrap;
 font-weight:900;
 font-size:55px;
-transform: translateY(10px) rotate(-60deg);
-transform-origin:center;
+transform:rotate(-60deg);
+transform-origin:top center;
+overflow:hidden;
+text-overflow:ellipsis;
 }
 
 </style>
@@ -113,10 +103,10 @@ const GID="41203482";
 const TARGET=150000;
 const REFRESH_MS=90000;
 
+const RANGE="J3:K25";
+
 const MAKE_SMALL_VALUES_VISIBLE=true;
 const MIN_VISIBLE_PCT=1.2;
-
-const RANGE="J3:K25";
 
 const chart=document.getElementById("chart");
 
@@ -125,6 +115,7 @@ return `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=c
 }
 
 function parseCSV(text){
+
 const rows=[];
 let row=[];
 let cell="";
@@ -155,29 +146,35 @@ continue;
 }
 
 cell+=ch;
+
 }
 
 row.push(cell);
 rows.push(row);
 
 return rows
-.map(r=>(r||[]).map(v=>(v??"").trim()))
+.map(r=>r.map(v=>v.trim()))
 .filter(r=>r.length>=2);
+
 }
 
 function toNumber(v){
-const s=String(v??"").replace(/\s/g,"").replace(",",".");
+const s=String(v).replace(/\s/g,"").replace(",",".");
 const n=Number(s);
 return Number.isFinite(n)?n:0;
 }
 
 function hashString(s){
+
 let h=2166136261;
+
 for(let i=0;i<s.length;i++){
 h^=s.charCodeAt(i);
 h=Math.imul(h,16777619);
 }
+
 return h>>>0;
+
 }
 
 const COLORS=[
@@ -196,6 +193,7 @@ return COLORS[hashString(name)%COLORS.length];
 }
 
 function niceMax(v){
+
 if(v<=0)return 1;
 
 const exp=Math.pow(10,Math.floor(Math.log10(v)));
@@ -209,6 +207,7 @@ else if(frac<=5)niceFrac=5;
 else niceFrac=10;
 
 return niceFrac*exp;
+
 }
 
 function draw3DBar(ctx,x,y,w,h,color){
@@ -253,7 +252,7 @@ const targetPct=(TARGET/axisMax)*100;
 chart.innerHTML=`
 <div class="vwrap">
 
-<div class="cap"></div>
+<div></div>
 
 <div class="plot">
 
@@ -298,13 +297,13 @@ const H=rect.height-padT-padB;
 
 const n=items.length;
 const gap=8;
+
 const barW=Math.max(10,Math.floor((W-gap*(n-1))/n));
-
-labelsEl.style.gridTemplateColumns = `repeat(${n}, ${barW}px)`;
-labelsEl.style.columnGap = gap + "px";
-labelsEl.style.width = totalW + "px";
-
 const totalW=n*barW+(n-1)*gap;
+
+labelsEl.style.gridTemplateColumns=`repeat(${n}, ${barW}px)`;
+labelsEl.style.columnGap=gap+"px";
+labelsEl.style.width=totalW+"px";
 
 let startX=padL+(W-totalW)/2;
 
@@ -312,7 +311,7 @@ items.forEach((it,i)=>{
 
 let pct=(it.value/axisMax)*100;
 
-if(MAKE_SMALL_VALUES_VISIBLE&&it.value>0){
+if(MAKE_SMALL_VALUES_VISIBLE && it.value>0){
 pct=Math.max(pct,MIN_VISIBLE_PCT);
 }
 
@@ -341,7 +340,6 @@ window.addEventListener("resize",redraw);
 async function load(){
 
 const text=await fetch(csvUrl(RANGE)).then(r=>r.text());
-
 const data=parseCSV(text);
 
 renderChart(data);
