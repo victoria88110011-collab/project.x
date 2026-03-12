@@ -310,6 +310,12 @@ const canvas=chart.querySelector("canvas");
 function redraw(){
 
 const rect=plot.getBoundingClientRect();
+
+if(rect.width===0 || rect.height===0){
+requestAnimationFrame(redraw);
+return;
+}
+
 const dpr=window.devicePixelRatio||1;
 
 canvas.width=rect.width*dpr;
