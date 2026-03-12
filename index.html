@@ -50,10 +50,12 @@ display:block;
 }
 
 .xlabels{
-display:grid;
-grid-auto-flow:column;
-grid-auto-columns:1fr;
+position:absolute;
+left:40px;
+right:40px;
+bottom:0;
 
+display:grid;
 align-items:start;
 justify-items:center;
 
@@ -68,9 +70,9 @@ align-items:flex-start;
 
 font-weight:900;
 
-font-size:clamp(12px, 2.2vw, 32px);
+font-size:clamp(16px, 2.8vw, 42px);
 
-transform:rotate(-60deg);
+transform:rotate(-70deg);
 transform-origin:top center;
 
 white-space:nowrap;
@@ -190,7 +192,8 @@ container.innerHTML=`
 const canvas=container.querySelector("canvas");
 const labels=container.querySelector(".xlabels");
 
-labels.style.gridTemplateColumns=`repeat(${items.length},1fr)`;
+labels.style.gridTemplateColumns = `repeat(${items.length}, 1fr)`;
+labels.style.columnGap = "10px";
 labels.innerHTML=items.map(i=>`<div class="xlabel">${i.name}</div>`).join("");
 
 function draw(){
@@ -208,7 +211,7 @@ canvas.style.height=rect.height+"px";
 const ctx=canvas.getContext("2d");
 ctx.setTransform(dpr,0,0,dpr,0,0);
 
-const padSide = rect.width * 0.03;
+const padSide = 40;
 const padTop  = rect.height * 0.08;
 
 const labelSpace = rect.height * 0.20;
