@@ -28,7 +28,7 @@ display:flex;
 width:100%;
 height:100%;
 display:grid;
-grid-template-rows: 1fr 260px;
+grid-template-rows: 1fr auto;
 padding:20px;
 box-sizing:border-box;
 }
@@ -41,6 +41,7 @@ overflow:hidden;
 background:
 linear-gradient(to bottom, rgba(0,0,0,.08) 1px, transparent 1px);
 background-size:100% 20%;
+margin-bottom:10px;
 }
 
 canvas{
@@ -50,16 +51,15 @@ display:block;
 }
 
 .xlabels{
-position:absolute;
-left:40px;
-right:40px;
-bottom:0;
-
 display:grid;
+grid-auto-flow:column;
+grid-auto-columns:1fr;
+
 align-items:start;
 justify-items:center;
 
-padding-top:20px;
+padding-top:30px;
+padding-bottom:10px;
 }
 
 .xlabel{
@@ -214,7 +214,7 @@ ctx.setTransform(dpr,0,0,dpr,0,0);
 const padSide = 40;
 const padTop  = rect.height * 0.08;
 
-const labelSpace = rect.height * 0.20;
+const labelSpace = 0;
 
 const valueFont = Math.max(14, rect.width * 0.02);
 
