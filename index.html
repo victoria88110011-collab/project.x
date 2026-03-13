@@ -301,28 +301,89 @@ const cx=w/2;
 const cy=h/2;
 const r=w*0.42;
 
-ctx.lineWidth=12;
+/* фон шкалы */
+
+ctx.lineWidth=16;
 ctx.strokeStyle="rgba(34,211,238,.25)";
 ctx.beginPath();
 ctx.arc(cx,cy,r,Math.PI*0.75,Math.PI*2.25);
 ctx.stroke();
 
+/* деления */
+
+const steps=4;
+
+ctx.fillStyle="#22d3ee";
+ctx.font="600 16px Inter";
+ctx.textAlign="center";
+
+for(let i=0;i<=steps;i++){
+
+const pct=i/steps;
+
+const angle=Math.PI*0.75 + pct*Math.PI*1.5;
+
+const x1=cx+Math.cos(angle)*(r-10);
+const y1=cy+Math.sin(angle)*(r-10);
+
+const x2=cx+Math.cos(angle)*(r+8);
+const y2=cy+Math.sin(angle)*(r+8);
+
+/* линия деления */
+
+ctx.lineWidth=3;
+ctx.strokeStyle="#22d3ee";
+
+ctx.beginPath();
+ctx.moveTo(x1,y1);
+ctx.lineTo(x2,y2);
+ctx.stroke();
+
+/* подпись */
+
+const labelValue=(max/steps)*i;
+
+let text;
+
+if(labelValue>=1000000){
+text=(labelValue/1000000).toFixed(1)+"M";
+}else{
+text=(labelValue/1000)+"k";
+}
+
+const lx=cx+Math.cos(angle)*(r+30);
+const ly=cy+Math.sin(angle)*(r+30);
+
+ctx.fillText(text,lx,ly);
+
+}
+
+/* прогресс */
+
 const pct=Math.min(value/max,1);
 
 ctx.strokeStyle="#22d3ee";
 ctx.shadowColor="#22d3ee";
-ctx.shadowBlur=15;
+ctx.shadowBlur=20;
 
 ctx.beginPath();
-ctx.arc(cx,cy,r,Math.PI*0.75,Math.PI*0.75 + pct*Math.PI*1.5);
+ctx.arc(
+cx,
+cy,
+r,
+Math.PI*0.75,
+Math.PI*0.75 + pct*Math.PI*1.5
+);
 ctx.stroke();
 
 ctx.shadowBlur=0;
 
+/* стрелка */
+
 const angle=Math.PI*0.75 + pct*Math.PI*1.5;
 
-const px=cx+Math.cos(angle)*(r-10);
-const py=cy+Math.sin(angle)*(r-10);
+const px=cx+Math.cos(angle)*(r-15);
+const py=cy+Math.sin(angle)*(r-15);
 
 ctx.lineWidth=4;
 ctx.strokeStyle="#67e8f9";
@@ -332,14 +393,18 @@ ctx.moveTo(cx,cy);
 ctx.lineTo(px,py);
 ctx.stroke();
 
+/* центр */
+
 ctx.fillStyle="#22d3ee";
 ctx.beginPath();
 ctx.arc(cx,cy,6,0,Math.PI*2);
 ctx.fill();
 
+/* значение */
+
 ctx.font="700 28px Inter";
 ctx.textAlign="center";
-ctx.fillText(value.toLocaleString(),cx,cy+60);
+ctx.fillText(value.toLocaleString(),cx,cy+55);
 
 }
 
