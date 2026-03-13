@@ -14,8 +14,10 @@ padding:0;
 width:100vw;
 height:100vh;
 overflow:hidden;
-background:#fff;
-font-family:Arial,sans-serif;
+
+background:linear-gradient(180deg,#0f172a,#020617);
+font-family:Inter,Arial,sans-serif;
+color:#fff;
 }
 
 .chartHost{
@@ -23,37 +25,50 @@ width:100vw;
 height:100vh;
 }
 
-/* ==== Chart wrapper ==== */
+/* layout */
 
 .vwrap{
 height:100%;
 display:grid;
-grid-template-rows: 60px 2fr 1fr;
-gap:8px;
+grid-template-rows: 80px 2fr 1fr;
+gap:10px;
 padding:20px;
 box-sizing:border-box;
 }
+
+/* TOTAL */
 
 .cap{
 display:flex;
 justify-content:center;
 align-items:center;
-font-size:70px;
+
+font-size:60px;
 font-weight:900;
-background:#22c55e;
-color:#000;
-border-radius:12px;
-box-shadow:0 4px 12px rgba(0,0,0,.15);
+
+background:linear-gradient(90deg,#22c55e,#4ade80);
+color:#022c22;
+
+border-radius:14px;
+
+box-shadow:
+0 10px 30px rgba(0,0,0,.45),
+0 0 20px rgba(34,197,94,.3);
 }
+
+/* plot */
 
 .plot{
 position:relative;
-border:1px solid #eee;
-border-radius:12px;
-overflow:hidden;
+border-radius:16px;
+
 background:
-linear-gradient(to bottom, rgba(0,0,0,.08) 1px, transparent 1px);
-background-size:100% 20%;
+radial-gradient(circle at top,rgba(255,255,255,.06),transparent 60%),
+linear-gradient(180deg,#020617,#020617);
+
+box-shadow:
+inset 0 0 40px rgba(255,255,255,.04),
+0 10px 40px rgba(0,0,0,.5);
 }
 
 canvas{
@@ -62,14 +77,16 @@ height:100%;
 display:block;
 }
 
+/* target */
+
 .targetLabel{
 position:absolute;
-right:8px;
-font-size:13px;
+right:10px;
+font-size:14px;
 font-weight:900;
-color:#e11d48;
-background:rgba(255,255,255,.92);
-padding:2px 6px;
+color:#fff;
+background:#e11d48;
+padding:4px 8px;
 border-radius:999px;
 }
 
@@ -79,27 +96,26 @@ left:0;
 right:0;
 height:2px;
 background:#e11d48;
-opacity:.85;
 }
 
-/* ==== Labels ==== */
+/* names */
 
 .xlabels{
 display:flex;
 justify-content:center;
-align-items:center;
+align-items:flex-start;
 gap:8px;
-padding:6px 10px 0 10px;
+padding:10px;
 }
 
 .xlabel{
-width:0;
 flex:1;
 text-align:center;
-white-space:nowrap;
+
 font-weight:900;
-font-size:55px;
-transform: translate(-12px,10px) rotate(-60deg);
+font-size:40px;
+
+transform:rotate(-60deg);
 transform-origin:center;
 }
 
@@ -118,90 +134,46 @@ const GID="41203482";
 const TARGET=150000;
 const REFRESH_MS=90000;
 
-const MAKE_SMALL_VALUES_VISIBLE=true;
-const MIN_VISIBLE_PCT=1.2;
-
 const RANGE="J3:K19";
 
 const chart=document.getElementById("chart");
+
+/* neon colors */
+
+const COLORS=[
+["#ff0080","#ff5db1"],
+["#7c3aed","#a78bfa"],
+["#06b6d4","#22d3ee"],
+["#22c55e","#4ade80"],
+["#f97316","#fb923c"]
+];
+
+/* csv url */
 
 function csvUrl(range){
 return `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=csv&gid=${GID}&range=${range}&t=${Date.now()}`;
 }
 
+/* parse */
+
 function parseCSV(text){
 
 const rows=[];
-let row=[];
-let cell="";
-let inQuotes=false;
 
-for(let i=0;i<text.length;i++){
+text.split("\n").forEach(line=>{
+const r=line.split(",");
+if(r.length>=2) rows.push([r[0].trim(),r[1].trim()]);
+});
 
-const ch=text[i];
-const next=text[i+1];
-
-if(ch=='"'&&inQuotes&&next=='"'){cell+='"';i++;continue;}
-if(ch=='"'){inQuotes=!inQuotes;continue;}
-
-if(ch=="\n"&&!inQuotes){
-row.push(cell);
-rows.push(row);
-row=[];
-cell="";
-continue;
-}
-
-if(ch=="\r")continue;
-
-if(ch==","&&!inQuotes){
-row.push(cell);
-cell="";
-continue;
-}
-
-cell+=ch;
-
-}
-
-row.push(cell);
-rows.push(row);
-
-return rows
-.map(r=>(r||[]).map(v=>(v??"").trim()))
-.filter(r=>r.length>=2);
+return rows;
 
 }
 
 function toNumber(v){
-const s=String(v??"").replace(/\s/g,"").replace(",",".");
-const n=Number(s);
-return Number.isFinite(n)?n:0;
+return Number(String(v).replace(/\s/g,"").replace(",","."))||0;
 }
 
-function hashString(s){
-let h=2166136261;
-for(let i=0;i<s.length;i++){
-h^=s.charCodeAt(i);
-h=Math.imul(h,16777619);
-}
-return h>>>0;
-}
-
-const COLORS=[
-"#1f2937",
-"#334155",
-"#0f766e",
-"#1e40af",
-"#6b21a8",
-"#7c2d12",
-"#065f46",
-"#3f3f46"
-];
-
-function colorForName(name){
-return COLORS[hashString(name)%COLORS.length];
-}
+/* axis */
 
 function niceMax(v){
 
@@ -221,41 +193,45 @@ return niceFrac*exp;
 
 }
 
-function draw3DBar(ctx,x,y,w,h,color){
+/* modern bar */
 
-const depth=Math.min(10,Math.max(4,w*0.18));
-const top=Math.min(10,Math.max(4,w*0.18));
+function drawModernBar(ctx,x,y,w,h,colors){
 
-ctx.fillStyle=color;
-ctx.fillRect(x,y,w,h);
+const g=ctx.createLinearGradient(0,y,0,y+h);
 
-ctx.fillStyle="rgba(255,255,255,0.28)";
+g.addColorStop(0,colors[1]);
+g.addColorStop(1,colors[0]);
+
+ctx.fillStyle=g;
+
+ctx.shadowColor=colors[1];
+ctx.shadowBlur=25;
+
+const r=10;
+
 ctx.beginPath();
-ctx.moveTo(x,y);
-ctx.lineTo(x+top,y-top);
-ctx.lineTo(x+w,y-top);
-ctx.lineTo(x+w-top,y);
-ctx.closePath();
-ctx.fill();
 
-ctx.fillStyle="rgba(0,0,0,0.18)";
-ctx.beginPath();
-ctx.moveTo(x+w,y);
+ctx.moveTo(x,y+r);
+ctx.arcTo(x,y,x+r,y,r);
+ctx.lineTo(x+w-r,y);
+ctx.arcTo(x+w,y,x+w,y+r,r);
 ctx.lineTo(x+w,y+h);
-ctx.lineTo(x+w+depth,y+h-top);
-ctx.lineTo(x+w+depth,y-top);
+ctx.lineTo(x,y+h);
+
 ctx.closePath();
 ctx.fill();
+
+ctx.shadowBlur=0;
 
 }
+
+/* render */
 
 function renderChart(pairs){
 
 let items=pairs.map(r=>({name:r[0],value:toNumber(r[1])}));
 
 items.sort((a,b)=>b.value-a.value);
-
-/* ==== TOTAL ==== */
 
 const total = items.reduce((s,i)=>s+i.value,0);
 
@@ -265,6 +241,7 @@ const axisMax=niceMax(maxData||1);
 const targetPct=(TARGET/axisMax)*100;
 
 chart.innerHTML=`
+
 <div class="vwrap">
 
 <div class="cap">
@@ -304,41 +281,50 @@ canvas.style.height=rect.height+"px";
 const ctx=canvas.getContext("2d");
 
 ctx.setTransform(dpr,0,0,dpr,0,0);
+
 ctx.clearRect(0,0,rect.width,rect.height);
 
-const padL=14,padR=22,padT=14,padB=22;
+const pad=30;
 
-const W=rect.width-padL-padR;
-const H=rect.height-padT-padB;
+const W=rect.width-pad*2;
+const H=rect.height-pad*2;
 
 const n=items.length;
-const gap=8;
-const barW=Math.max(10,Math.floor((W-gap*(n-1))/n));
 
-const totalW=n*barW+(n-1)*gap;
+const gap=20;
+const barW=Math.max(20,(W-gap*(n-1))/n);
 
-let startX=padL+(W-totalW)/2;
+let startX=pad;
 
 items.forEach((it,i)=>{
 
-let pct=(it.value/axisMax)*100;
-
-if(MAKE_SMALL_VALUES_VISIBLE&&it.value>0){
-pct=Math.max(pct,MIN_VISIBLE_PCT);
-}
+const pct=(it.value/axisMax)*100;
 
 const h=(pct/100)*H;
 
 const x=startX+i*(barW+gap);
-const y=padT+(H-h);
+const y=pad+(H-h);
 
-ctx.fillStyle="#000";
-ctx.font="800 50px Arial";
+const colors=COLORS[i%COLORS.length];
+
+drawModernBar(ctx,x,y,barW,h,colors);
+
+/* percent */
+
+const percent=Math.round((it.value/maxData)*100);
+
+ctx.fillStyle="#fff";
 ctx.textAlign="center";
+ctx.font="900 40px Arial";
 
-ctx.fillText(it.value,x+barW/2,y-6);
+ctx.fillText(percent+"%",x+barW/2,y-10);
 
-draw3DBar(ctx,x,y,barW,h,colorForName(it.name));
+/* crown */
+
+if(i===0){
+ctx.font="50px serif";
+ctx.fillText("👑",x+barW/2,y-50);
+}
 
 });
 
@@ -348,6 +334,8 @@ redraw();
 window.addEventListener("resize",redraw);
 
 }
+
+/* load */
 
 async function load(){
 
@@ -360,6 +348,7 @@ renderChart(data);
 }
 
 load();
+
 setInterval(load,REFRESH_MS);
 
 </script>
