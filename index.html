@@ -243,25 +243,35 @@ return niceFrac*exp;
 
 /* BAR */
 
-function drawBar(ctx,x,y,w,h){
+function drawBar(ctx,x,y,w,h,index){
 
-const depth=Math.min(12,w*0.35);
+const palettes=[
+["#67e8f9","#22d3ee","#0891b2","#075985"], // cyan
+["#60a5fa","#3b82f6","#2563eb","#1e3a8a"], // blue
+["#a78bfa","#8b5cf6","#7c3aed","#4c1d95"], // violet
+["#f472b6","#ec4899","#be185d","#831843"], // pink
+["#34d399","#10b981","#059669","#064e3b"], // green
+];
+
+const p=palettes[index%palettes.length];
 
 const gradient=ctx.createLinearGradient(0,y,0,y+h);
 
-gradient.addColorStop(0,"#67e8f9");
-gradient.addColorStop(.35,"#22d3ee");
-gradient.addColorStop(.75,"#0891b2");
-gradient.addColorStop(1,"#075985");
+gradient.addColorStop(0,p[0]);
+gradient.addColorStop(.35,p[1]);
+gradient.addColorStop(.75,p[2]);
+gradient.addColorStop(1,p[3]);
 
 ctx.fillStyle=gradient;
 
-ctx.shadowColor="#22d3ee";
+ctx.shadowColor=p[1];
 ctx.shadowBlur=18;
 
 ctx.fillRect(x,y,w,h);
 
 ctx.shadowBlur=0;
+
+/* блик */
 
 ctx.fillStyle="rgba(255,255,255,0.15)";
 ctx.fillRect(x+2,y+2,w*0.15,h*0.9);
@@ -410,7 +420,7 @@ const h=(pct/100)*H;
 const x=startX+i*(barW+gap);
 const y=padT+(H-h);
 
-drawBar(ctx,x,y,barW,h);
+drawBar(ctx,x,y,barW,h,i);
 
 /* VALUE */
 
