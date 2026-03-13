@@ -22,7 +22,7 @@ font-family:'Inter',sans-serif;
 color:#14b8d4;
 }
 
-/* GRID */
+/* ретро авто фон */
 
 body::after{
 
@@ -35,11 +35,31 @@ background:url("https://images.unsplash.com/photo-1503376780353-7e6692767b70?aut
 background-size:cover;
 background-position:center;
 
-opacity:0.07;
+opacity:0.06;
 
 filter:blur(3px) brightness(0.6);
 
 z-index:-2;
+
+}
+
+/* HUD сетка */
+
+body::before{
+
+content:"";
+position:fixed;
+inset:0;
+
+background:
+linear-gradient(#0ea5e9 1px, transparent 1px),
+linear-gradient(90deg,#0ea5e9 1px, transparent 1px);
+
+background-size:80px 80px;
+
+opacity:.05;
+
+z-index:-1;
 
 }
 
@@ -126,7 +146,6 @@ height:100%;
 .xlabel{
 
 position:absolute;
-
 left:0;
 
 transform:translateX(-50%) rotate(-45deg);
@@ -243,8 +262,6 @@ function drawBar(ctx,x,y,w,h){
 
 const depth=Math.min(12,w*0.35);
 
-/* основной градиент */
-
 const gradient=ctx.createLinearGradient(0,y,0,y+h);
 
 gradient.addColorStop(0,"#67e8f9");
@@ -255,13 +272,13 @@ gradient.addColorStop(1,"#075985");
 ctx.fillStyle=gradient;
 
 ctx.shadowColor="#22d3ee";
-ctx.shadowBlur=22;
+ctx.shadowBlur=18;
 
 ctx.fillRect(x,y,w,h);
 
 ctx.shadowBlur=0;
 
-/* верхняя грань */
+/* верх */
 
 ctx.fillStyle="rgba(255,255,255,0.35)";
 
@@ -273,7 +290,7 @@ ctx.lineTo(x+w-depth,y);
 ctx.closePath();
 ctx.fill();
 
-/* боковая грань */
+/* бок */
 
 ctx.fillStyle="rgba(0,0,0,0.45)";
 
@@ -291,6 +308,7 @@ ctx.fillStyle="rgba(255,255,255,0.15)";
 ctx.fillRect(x+2,y+2,w*0.15,h*0.9);
 
 }
+
 /* RENDER */
 
 function renderChart(pairs){
@@ -329,7 +347,6 @@ const labelsLayer=chart.querySelector(".labelsLayer");
 function redraw(){
 
 const rect=plot.getBoundingClientRect();
-
 const dpr=window.devicePixelRatio||1;
 
 canvas.width=rect.width*dpr;
@@ -355,7 +372,6 @@ const n=items.length;
 const gap=8;
 
 const barW=Math.max(10,Math.floor((W-gap*(n-1))/n));
-
 const totalW=n*barW+(n-1)*gap;
 
 let startX=padL+(W-totalW)/2;
@@ -375,31 +391,19 @@ drawBar(ctx,x,y,barW,h);
 
 const text=it.value.toLocaleString();
 
-ctx.font="900 56px Inter";
-ctx.textAlign="center";
-
 ctx.font="900 58px Inter";
 ctx.textAlign="center";
-
-/* контур */
 
 ctx.lineWidth=6;
 ctx.strokeStyle="#00151f";
 ctx.strokeText(text,x+barW/2,y-8);
 
-/* основной текст */
-
 ctx.fillStyle="#22d3ee";
-ctx.fillText(text,x+barW/2,y-8);
-
-/* лёгкий glow */
 
 ctx.shadowColor="#22d3ee";
 ctx.shadowBlur=10;
 
 ctx.fillText(text,x+barW/2,y-8);
-
-ctx.shadowBlur=0;
 
 ctx.shadowBlur=0;
 
@@ -431,7 +435,6 @@ window.addEventListener("resize",redraw);
 async function load(){
 
 const text=await fetch(csvUrl(RANGE)).then(r=>r.text());
-
 const data=parseCSV(text);
 
 renderChart(data);
