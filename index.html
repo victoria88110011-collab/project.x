@@ -25,16 +25,29 @@ color:#14b8d4;
 /* GRID */
 
 body::before{
+
 content:"";
 position:fixed;
 inset:0;
 
 background:
-linear-gradient(#0ea5e9 1px, transparent 1px),
-linear-gradient(90deg,#0ea5e9 1px, transparent 1px);
 
-background-size:80px 80px;
-opacity:.05;
+linear-gradient(
+rgba(2,6,23,0.92),
+rgba(2,6,23,0.92)
+),
+
+url("https://images.unsplash.com/photo-1493238792000-8113da705763?auto=format&fit=crop&w=2000&q=80");
+
+background-size:cover;
+background-position:center;
+
+opacity:0.25;
+
+filter:blur(2px) brightness(0.6);
+
+z-index:-1;
+
 }
 
 /* HOST */
