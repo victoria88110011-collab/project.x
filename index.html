@@ -118,21 +118,23 @@ height:100%;
 }
 
 .xlabel{
+
 position:absolute;
 
 left:0;
 
 transform:translateX(-50%) rotate(-45deg);
 
-font-weight:700;
+font-weight:800;
 
 white-space:nowrap;
 
-color:#0ea5b7;
+color:#22d3ee;
 
-opacity:.9;
+text-shadow:
+0 2px 2px rgba(0,0,0,0.8),
+0 0 6px rgba(34,211,238,0.5);
 
-text-shadow:0 0 6px rgba(0,255,255,.4);
 }
 
 </style>
@@ -370,16 +372,28 @@ const text=it.value.toLocaleString();
 ctx.font="900 56px Inter";
 ctx.textAlign="center";
 
-ctx.lineWidth=5;
-ctx.strokeStyle="rgba(0,0,0,0.85)";
+ctx.font="900 58px Inter";
+ctx.textAlign="center";
+
+/* контур */
+
+ctx.lineWidth=6;
+ctx.strokeStyle="#00151f";
 ctx.strokeText(text,x+barW/2,y-8);
 
-ctx.fillStyle="#0891b2";   // темнее
+/* основной текст */
+
+ctx.fillStyle="#22d3ee";
+ctx.fillText(text,x+barW/2,y-8);
+
+/* лёгкий glow */
 
 ctx.shadowColor="#22d3ee";
-ctx.shadowBlur=16;
+ctx.shadowBlur=10;
 
 ctx.fillText(text,x+barW/2,y-8);
+
+ctx.shadowBlur=0;
 
 ctx.shadowBlur=0;
 
