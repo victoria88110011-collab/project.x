@@ -1,3 +1,4 @@
+ничего не изменилось 
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -14,7 +15,7 @@ padding:0;
 width:100vw;
 height:100vh;
 overflow:hidden;
-background:#020b1f;
+background:#0b1220;
 font-family:Arial,sans-serif;
 color:#fff;
 }
@@ -24,48 +25,51 @@ width:100vw;
 height:100vh;
 }
 
+/* ===== Layout ===== */
+
 .vwrap{
 height:100%;
 display:grid;
-grid-template-rows:60px 1fr 220px;
+grid-template-rows:80px 2fr 1fr;
 gap:10px;
-padding:14px;
+padding:20px;
 box-sizing:border-box;
 }
 
-/* TOTAL */
+/* ===== TOTAL ===== */
 
 .cap{
 display:flex;
 justify-content:center;
 align-items:center;
-
-font-size:36px;
+font-size:70px;
 font-weight:900;
-letter-spacing:3px;
 
-background:linear-gradient(#0c1a38,#010716);
-border-radius:8px;
+background:linear-gradient(180deg,#1f2937,#020617);
+border-radius:16px;
 
 box-shadow:
-0 4px 20px rgba(0,0,0,.8),
-inset 0 0 20px rgba(255,255,255,.05);
+0 20px 60px rgba(0,0,0,.6),
+inset 0 0 30px rgba(255,255,255,.05);
+
+letter-spacing:2px;
 }
 
-/* PLOT */
+/* ===== Plot ===== */
 
 .plot{
 position:relative;
-border-radius:10px;
+border-radius:16px;
+overflow:hidden;
 
 background:
-linear-gradient(to bottom, rgba(255,255,255,.06) 1px, transparent 1px);
+linear-gradient(to bottom, rgba(255,255,255,.05) 1px, transparent 1px);
 
 background-size:100% 20%;
 
 box-shadow:
-inset 0 0 40px rgba(0,0,0,.9),
-0 20px 60px rgba(0,0,0,.6);
+inset 0 0 40px rgba(0,0,0,.8),
+0 20px 60px rgba(0,0,0,.5);
 }
 
 canvas{
@@ -74,7 +78,7 @@ height:100%;
 display:block;
 }
 
-/* TARGET */
+/* ===== Target ===== */
 
 .targetLine{
 position:absolute;
@@ -82,7 +86,7 @@ left:0;
 right:0;
 height:2px;
 background:#ff3b6b;
-box-shadow:0 0 14px #ff3b6b;
+box-shadow:0 0 10px #ff3b6b;
 }
 
 .targetLabel{
@@ -96,21 +100,21 @@ padding:4px 8px;
 border-radius:6px;
 }
 
-/* NAMES */
+/* ===== Labels ===== */
 
 .xlabels{
 display:flex;
 justify-content:center;
 align-items:flex-start;
 gap:8px;
-padding-top:20px;
+padding-top:10px;
 }
 
 .xlabel{
 flex:1;
 text-align:center;
 font-weight:900;
-font-size:42px;
+font-size:70px;
 color:#e5e7eb;
 
 transform:translate(-12px,10px) rotate(-60deg);
@@ -131,7 +135,6 @@ const GID="41203482";
 
 const TARGET=150000;
 const RANGE="J3:K19";
-
 const REFRESH_MS=90000;
 
 const chart=document.getElementById("chart");
@@ -151,12 +154,9 @@ return text
 }
 
 function toNumber(v){
-
 const s=String(v).replace(/\s/g,"").replace(",",".");
 const n=Number(s);
-
 return Number.isFinite(n)?n:0;
-
 }
 
 function niceMax(v){
@@ -171,14 +171,11 @@ return 10*exp;
 
 }
 
-/* ===== Render Chart ===== */
+/* ===== Render ===== */
 
 function renderChart(pairs){
 
-let items=pairs.map(r=>({
-name:r[0],
-value:toNumber(r[1])
-}));
+let items=pairs.map(r=>({name:r[0],value:toNumber(r[1])}));
 
 items.sort((a,b)=>b.value-a.value);
 
@@ -199,9 +196,7 @@ TOTAL ${total.toLocaleString()}
 <div class="plot">
 
 <div class="targetLine" style="bottom:${targetPct}%"></div>
-<div class="targetLabel" style="bottom:${targetPct}%">
-TARGET ${TARGET}
-</div>
+<div class="targetLabel" style="bottom:${targetPct}%">TARGET ${TARGET}</div>
 
 <canvas></canvas>
 
@@ -229,25 +224,22 @@ canvas.style.width=rect.width+"px";
 canvas.style.height=rect.height+"px";
 
 const ctx=canvas.getContext("2d");
-
 ctx.setTransform(dpr,0,0,dpr,0,0);
 ctx.clearRect(0,0,rect.width,rect.height);
 
 const pad=40;
-
 const W=rect.width-pad*2;
 const H=rect.height-pad*2;
 
 const n=items.length;
-
-const gap=10;
+const gap=20;
 const barW=(W-gap*(n-1))/n;
 
 let startX=pad;
 
 const points=[];
 
-/* ===== BARS ===== */
+/* ===== Bars ===== */
 
 items.forEach((it,i)=>{
 
@@ -260,46 +252,25 @@ const y=rect.height-pad-h;
 /* gradient */
 
 const g=ctx.createLinearGradient(0,y,0,y+h);
-
-g.addColorStop(0,"#7df9ff");
-g.addColorStop(0.4,"#5fa8ff");
+g.addColorStop(0,"#6ee7ff");
 g.addColorStop(1,"#4f46e5");
 
 ctx.fillStyle=g;
 
-/* neon glow */
-
-ctx.shadowBlur=45;
+ctx.shadowBlur=20;
 ctx.shadowColor="#38bdf8";
 
 ctx.fillRect(x,y,barW,h);
 
 ctx.shadowBlur=0;
 
-/* top highlight */
-
-const g2=ctx.createLinearGradient(0,y,0,y+20);
-
-g2.addColorStop(0,"rgba(255,255,255,.8)");
-g2.addColorStop(1,"rgba(255,255,255,0)");
-
-ctx.fillStyle=g2;
-
-ctx.fillRect(x,y,barW,20);
-
 /* value */
 
 ctx.fillStyle="#fff";
-ctx.font="bold 18px Arial";
+ctx.font="bold 28px Arial";
 ctx.textAlign="center";
 
-ctx.fillText(
-it.value.toLocaleString(),
-x+barW/2,
-y-6
-);
-
-/* point for line */
+ctx.fillText(it.value.toLocaleString(),x+barW/2,y-10);
 
 points.push({
 x:x+barW/2,
@@ -308,21 +279,19 @@ y:y
 
 });
 
-/* ===== LINE ===== */
+/* ===== Line graph ===== */
 
 ctx.beginPath();
 
 points.forEach((p,i)=>{
-if(i===0) ctx.moveTo(p.x,p.y);
+if(i===0)ctx.moveTo(p.x,p.y);
 else ctx.lineTo(p.x,p.y);
 });
 
 ctx.strokeStyle="#7dd3fc";
 ctx.lineWidth=3;
-
-ctx.shadowBlur=20;
-ctx.shadowColor="#38bdf8";
-
+ctx.shadowBlur=10;
+ctx.shadowColor="#7dd3fc";
 ctx.stroke();
 
 ctx.shadowBlur=0;
@@ -330,14 +299,10 @@ ctx.shadowBlur=0;
 /* points */
 
 points.forEach(p=>{
-
 ctx.beginPath();
-
-ctx.arc(p.x,p.y,4,0,Math.PI*2);
-
+ctx.arc(p.x,p.y,5,0,Math.PI*2);
 ctx.fillStyle="#38bdf8";
 ctx.fill();
-
 });
 
 }
@@ -346,8 +311,6 @@ redraw();
 window.addEventListener("resize",redraw);
 
 }
-
-/* ===== Load data ===== */
 
 async function load(){
 
@@ -360,7 +323,6 @@ renderChart(data);
 }
 
 load();
-
 setInterval(load,REFRESH_MS);
 
 </script>
