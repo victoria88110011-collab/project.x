@@ -183,77 +183,47 @@ return Number.isFinite(n)?n:0;
 /* colors */
 
 const COLORS=[
-["#ff2ea6","#ff6ad5"],
-["#7c4dff","#c084fc"],
-["#06b6d4","#67e8f9"],
-["#22c55e","#4ade80"]
+["#2563eb","#60a5fa"],
+["#0ea5a4","#5eead4"],
+["#16a34a","#86efac"],
+["#6366f1","#a5b4fc"]
 ];
 
 function colorForIndex(i){
 return COLORS[i%COLORS.length];
 }
 
-/* 3D neon bar */
+/* bar style */
 
-function draw3DBar(ctx,x,y,w,h,c1,c2){
-
-const depth=10;
-
-/* front */
+function drawBar(ctx,x,y,w,h,c1,c2){
 
 const g=ctx.createLinearGradient(0,y,0,y+h);
 g.addColorStop(0,c2);
 g.addColorStop(1,c1);
 
-ctx.shadowBlur=25;
-ctx.shadowColor=c1;
-
 ctx.fillStyle=g;
 ctx.fillRect(x,y,w,h);
 
-ctx.shadowBlur=0;
+/* glass highlight */
 
-/* side */
+const glass=ctx.createLinearGradient(x,y,x+w,y);
 
-ctx.beginPath();
-ctx.moveTo(x+w,y);
-ctx.lineTo(x+w+depth,y-depth);
-ctx.lineTo(x+w+depth,y+h-depth);
-ctx.lineTo(x+w,y+h);
-ctx.closePath();
+glass.addColorStop(0,"rgba(255,255,255,.35)");
+glass.addColorStop(.2,"rgba(255,255,255,.08)");
+glass.addColorStop(.5,"rgba(255,255,255,.03)");
+glass.addColorStop(1,"rgba(255,255,255,0)");
 
-ctx.fillStyle=c1;
-ctx.globalAlpha=.5;
-ctx.fill();
-ctx.globalAlpha=1;
-
-/* top */
-
-ctx.beginPath();
-ctx.moveTo(x,y);
-ctx.lineTo(x+depth,y-depth);
-ctx.lineTo(x+w+depth,y-depth);
-ctx.lineTo(x+w,y);
-ctx.closePath();
-
-ctx.fillStyle=c2;
-ctx.globalAlpha=.7;
-ctx.fill();
-ctx.globalAlpha=1;
-
-/* highlight */
-
-const highlight=ctx.createLinearGradient(x,y,x+w,y);
-highlight.addColorStop(0,"rgba(255,255,255,.5)");
-highlight.addColorStop(.4,"rgba(255,255,255,.15)");
-highlight.addColorStop(1,"rgba(255,255,255,0)");
-
-ctx.fillStyle=highlight;
+ctx.fillStyle=glass;
 ctx.fillRect(x,y,w,h);
+
+/* top edge */
+
+ctx.fillStyle="rgba(255,255,255,.35)";
+ctx.fillRect(x,y,w,2);
 
 }
 
-/* scaling */
+/* scale */
 
 function niceMax(v){
 
@@ -278,6 +248,7 @@ return niceFrac*exp;
 function renderChart(pairs){
 
 let items=pairs.map(r=>({name:r[0],value:toNumber(r[1])}));
+
 items.sort((a,b)=>b.value-a.value);
 
 const total=items.reduce((s,i)=>s+i.value,0);
@@ -336,7 +307,9 @@ const H=rect.height-pad*2;
 
 const n=items.length;
 const gap=20;
-const barW=Math.max(18,(W-gap*(n-1))/n);
+
+const cellW=(W-gap*(n-1))/n;
+const barW=cellW*0.72;
 
 let startX=pad;
 
@@ -345,12 +318,12 @@ items.forEach((it,i)=>{
 const pct=(it.value/axisMax)*100;
 const h=(pct/100)*H;
 
-const x=startX+i*(barW+gap);
+const x=startX+i*(cellW+gap)+(cellW-barW)/2;
 const y=rect.height-pad-h;
 
 const [c1,c2]=colorForIndex(i);
 
-draw3DBar(ctx,x,y,barW,h,c1,c2);
+drawBar(ctx,x,y,barW,h,c1,c2);
 
 /* value */
 
