@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -15,8 +14,8 @@ padding:0;
 width:100vw;
 height:100vh;
 overflow:hidden;
-background:linear-gradient(180deg,#0f172a,#020617);
-font-family:Inter,Arial,sans-serif;
+background:#0b0f1a;
+font-family:Arial,sans-serif;
 color:#fff;
 }
 
@@ -25,11 +24,13 @@ width:100vw;
 height:100vh;
 }
 
+/* wrapper */
+
 .vwrap{
 height:100%;
 display:grid;
-grid-template-rows:90px 1fr 160px;
-gap:14px;
+grid-template-rows:80px 2fr 1fr;
+gap:10px;
 padding:20px;
 box-sizing:border-box;
 }
@@ -40,32 +41,22 @@ box-sizing:border-box;
 display:flex;
 justify-content:center;
 align-items:center;
-font-size:64px;
+font-size:70px;
 font-weight:900;
-
-background:linear-gradient(90deg,#22c55e,#4ade80);
-color:#022c22;
-
-border-radius:16px;
-
-box-shadow:
-0 10px 30px rgba(0,0,0,.45),
-0 0 20px rgba(34,197,94,.35);
+color:#fff;
+background:linear-gradient(180deg,#1f2937,#111827);
+border-radius:14px;
+box-shadow:0 0 25px rgba(0,0,0,.6);
+letter-spacing:2px;
 }
 
-/* chart */
+/* chart area */
 
 .plot{
 position:relative;
-border-radius:18px;
-
-background:
-radial-gradient(circle at top,rgba(255,255,255,.08),transparent 70%),
-linear-gradient(180deg,#020617,#020617);
-
-box-shadow:
-inset 0 0 40px rgba(255,255,255,.05),
-0 10px 40px rgba(0,0,0,.6);
+border-radius:16px;
+overflow:hidden;
+background:linear-gradient(180deg,#0f172a,#020617);
 }
 
 canvas{
@@ -82,8 +73,8 @@ right:10px;
 font-size:14px;
 font-weight:900;
 color:#fff;
-background:#e11d48;
-padding:4px 8px;
+background:#ef4444;
+padding:3px 8px;
 border-radius:999px;
 }
 
@@ -92,31 +83,26 @@ position:absolute;
 left:0;
 right:0;
 height:2px;
-background:#e11d48;
+background:#ef4444;
 }
 
-/* names */
+/* labels */
 
 .xlabels{
 display:flex;
 justify-content:center;
-align-items:flex-start;
-gap:12px;
-padding-top:20px;
+align-items:center;
+gap:10px;
+padding-top:10px;
 }
 
 .xlabel{
 flex:1;
 text-align:center;
-white-space:nowrap;
-
 font-weight:900;
-font-size:52px;
-
-transform:translateY(20px) rotate(-60deg);
-transform-origin:center;
-
-color:#e2e8f0;
+font-size:60px;
+transform:rotate(-60deg);
+color:#cbd5f5;
 }
 
 </style>
@@ -138,16 +124,6 @@ const RANGE="J3:K19";
 
 const chart=document.getElementById("chart");
 
-/* colors */
-
-const COLORS=[
-["#ff0080","#ff5db1"],
-["#7c3aed","#a78bfa"],
-["#06b6d4","#22d3ee"],
-["#22c55e","#4ade80"],
-["#f97316","#fb923c"]
-];
-
 function csvUrl(range){
 return `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=csv&gid=${GID}&range=${range}&t=${Date.now()}`;
 }
@@ -155,19 +131,85 @@ return `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=c
 function parseCSV(text){
 
 const rows=[];
+let row=[];
+let cell="";
+let inQuotes=false;
 
-text.split("\n").forEach(line=>{
-const r=line.split(",");
-if(r.length>=2) rows.push([r[0].trim(),r[1].trim()]);
-});
+for(let i=0;i<text.length;i++){
 
-return rows;
+const ch=text[i];
+const next=text[i+1];
+
+if(ch=='"'&&inQuotes&&next=='"'){cell+='"';i++;continue;}
+if(ch=='"'){inQuotes=!inQuotes;continue;}
+
+if(ch=="\n"&&!inQuotes){
+row.push(cell);
+rows.push(row);
+row=[];
+cell="";
+continue;
+}
+
+if(ch=="\r")continue;
+
+if(ch==","&&!inQuotes){
+row.push(cell);
+cell="";
+continue;
+}
+
+cell+=ch;
+
+}
+
+row.push(cell);
+rows.push(row);
+
+return rows
+.map(r=>(r||[]).map(v=>(v??"").trim()))
+.filter(r=>r.length>=2);
 
 }
 
 function toNumber(v){
-return Number(String(v).replace(/\s/g,"").replace(",","."))||0;
+const s=String(v??"").replace(/\s/g,"").replace(",",".");
+const n=Number(s);
+return Number.isFinite(n)?n:0;
 }
+
+/* neon colors */
+
+const COLORS=[
+["#ff2ea6","#ff6ad5"],
+["#7c4dff","#c084fc"],
+["#06b6d4","#67e8f9"],
+["#22c55e","#4ade80"]
+];
+
+function colorForIndex(i){
+return COLORS[i%COLORS.length];
+}
+
+/* 3D neon bar */
+
+function drawNeonBar(ctx,x,y,w,h,color1,color2){
+
+const gradient=ctx.createLinearGradient(0,y,0,y+h);
+gradient.addColorStop(0,color2);
+gradient.addColorStop(1,color1);
+
+ctx.shadowBlur=20;
+ctx.shadowColor=color1;
+
+ctx.fillStyle=gradient;
+ctx.fillRect(x,y,w,h);
+
+ctx.shadowBlur=0;
+
+}
+
+/* axis scaling */
 
 function niceMax(v){
 
@@ -187,44 +229,9 @@ return niceFrac*exp;
 
 }
 
-/* draw bar */
-
-function drawBar(ctx,x,y,w,h,colors){
-
-const g=ctx.createLinearGradient(0,y,0,y+h);
-
-g.addColorStop(0,colors[1]);
-g.addColorStop(1,colors[0]);
-
-ctx.fillStyle=g;
-
-ctx.shadowColor=colors[1];
-ctx.shadowBlur=30;
-
-const r=10;
-
-ctx.beginPath();
-
-ctx.moveTo(x,y+r);
-ctx.arcTo(x,y,x+r,y,r);
-ctx.lineTo(x+w-r,y);
-ctx.arcTo(x+w,y,x+w,y+r,r);
-ctx.lineTo(x+w,y+h);
-ctx.lineTo(x,y+h);
-
-ctx.closePath();
-ctx.fill();
-
-ctx.shadowBlur=0;
-
-}
-
-/* render */
-
 function renderChart(pairs){
 
 let items=pairs.map(r=>({name:r[0],value:toNumber(r[1])}));
-
 items.sort((a,b)=>b.value-a.value);
 
 const total = items.reduce((s,i)=>s+i.value,0);
@@ -235,7 +242,6 @@ const axisMax=niceMax(maxData||1);
 const targetPct=(TARGET/axisMax)*100;
 
 chart.innerHTML=`
-
 <div class="vwrap">
 
 <div class="cap">
@@ -245,7 +251,7 @@ TOTAL ${total.toLocaleString()}
 <div class="plot">
 
 <div class="targetLine" style="bottom:${targetPct}%"></div>
-<div class="targetLabel" style="bottom:${targetPct}%">ЦЕЛЬ ${TARGET}</div>
+<div class="targetLabel" style="bottom:${targetPct}%">TARGET</div>
 
 <canvas></canvas>
 
@@ -277,47 +283,38 @@ const ctx=canvas.getContext("2d");
 ctx.setTransform(dpr,0,0,dpr,0,0);
 ctx.clearRect(0,0,rect.width,rect.height);
 
-const pad=40;
+const pad=20;
 
 const W=rect.width-pad*2;
 const H=rect.height-pad*2;
 
 const n=items.length;
-
-const gap=24;
-const barW=Math.max(20,(W-gap*(n-1))/n);
+const gap=20;
+const barW=Math.max(18,(W-gap*(n-1))/n);
 
 let startX=pad;
 
 items.forEach((it,i)=>{
 
 const pct=(it.value/axisMax)*100;
-
 const h=(pct/100)*H;
 
 const x=startX+i*(barW+gap);
-const y=pad+(H-h);
+const y=rect.height-pad-h;
 
-const colors=COLORS[i%COLORS.length];
+const [c1,c2]=colorForIndex(i);
 
-drawBar(ctx,x,y,barW,h,colors);
+drawNeonBar(ctx,x,y,barW,h,c1,c2);
 
 /* percent */
 
-const percent=Math.round((it.value/maxData)*100);
-
-ctx.fillStyle="#fff";
+ctx.fillStyle="#94a3b8";
+ctx.font="bold 40px Arial";
 ctx.textAlign="center";
-ctx.font="900 40px Arial";
 
-ctx.fillText(percent+"%",x+barW/2,y-10);
+const percent=Math.round(pct)+"%";
 
-/* crown */
-
-if(i===0){
-ctx.font="50px serif";
-ctx.fillText("👑",x+barW/2,y-50);
-}
+ctx.fillText(percent,x+barW/2,y-10);
 
 });
 
@@ -328,12 +325,9 @@ window.addEventListener("resize",redraw);
 
 }
 
-/* load */
-
 async function load(){
 
 const text=await fetch(csvUrl(RANGE)).then(r=>r.text());
-
 const data=parseCSV(text);
 
 renderChart(data);
@@ -341,11 +335,9 @@ renderChart(data);
 }
 
 load();
-
 setInterval(load,REFRESH_MS);
 
 </script>
 
 </body>
 </html>
-```
