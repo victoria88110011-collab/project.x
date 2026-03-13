@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -23,7 +24,7 @@ color:#14b8d4;
 position:relative;
 }
 
-/* фон авто */
+/* фон */
 
 body::after{
 content:"";
@@ -116,7 +117,7 @@ height:100%;
 .xlabel{
 position:absolute;
 left:0;
-transform:translateX(-50%) rotate(-45deg);
+transform:translateX(-50%) rotate(-35deg);
 font-weight:800;
 white-space:nowrap;
 color:#22d3ee;
@@ -274,13 +275,7 @@ ctx.shadowBlur=0;
 ctx.fillStyle="rgba(255,255,255,0.15)";
 ctx.fillRect(x+2,y+2,w*0.15,h*0.9);
 
-return p[1]; // основной цвет столбца
-}
-/* блик */
-
-ctx.fillStyle="rgba(255,255,255,0.15)";
-ctx.fillRect(x+2,y+2,w*0.15,h*0.9);
-
+return p[1];
 }
 
 /* SPEEDOMETER */
@@ -425,7 +420,8 @@ const h=(pct/100)*H;
 const x=startX+i*(barW+gap);
 const y=padT+(H-h);
 
-const barColor = drawBar(ctx,x,y,barW,h,i);
+const barColor=drawBar(ctx,x,y,barW,h,i);
+
 /* VALUE */
 
 const text=it.value.toLocaleString();
@@ -438,7 +434,7 @@ ctx.strokeStyle="#00151f";
 ctx.strokeText(text,x+barW/2,y-8);
 
 ctx.fillStyle=barColor;
-ctx.shadowColor="#22d3ee";
+ctx.shadowColor=barColor;
 ctx.shadowBlur=10;
 ctx.fillText(text,x+barW/2,y-8);
 ctx.shadowBlur=0;
@@ -451,13 +447,13 @@ label.className="xlabel";
 label.innerText=it.name;
 
 label.style.left=(x+barW/2)+"px";
-label.style.fontSize=Math.min(40,barW*0.55)+"px";
+label.style.fontSize=Math.min(44,barW*0.60)+"px";
 
 labelsLayer.appendChild(label);
 
 });
 
-/* рисуем спидометр один раз */
+/* цель 1.6M */
 
 drawSpeedometer(total,1600000);
 
@@ -484,3 +480,4 @@ setInterval(load,REFRESH_MS);
 
 </body>
 </html>
+```
