@@ -25,7 +25,6 @@ color:#14b8d4;
 /* GRID */
 
 body::before{
-
 content:"";
 position:fixed;
 inset:0;
@@ -35,9 +34,7 @@ linear-gradient(#0ea5e9 1px, transparent 1px),
 linear-gradient(90deg,#0ea5e9 1px, transparent 1px);
 
 background-size:80px 80px;
-
 opacity:.05;
-
 }
 
 /* HOST */
@@ -50,9 +47,7 @@ height:100vh;
 /* LAYOUT */
 
 .vwrap{
-
 height:100%;
-
 display:grid;
 
 grid-template-rows:
@@ -61,17 +56,13 @@ grid-template-rows:
 160px;
 
 gap:16px;
-
 padding:24px;
-
 box-sizing:border-box;
-
 }
 
 /* TOTAL */
 
 .cap{
-
 display:flex;
 justify-content:center;
 align-items:center;
@@ -90,13 +81,11 @@ border-radius:14px;
 box-shadow:
 0 0 25px rgba(0,255,255,.35),
 inset 0 0 20px rgba(0,255,255,.15);
-
 }
 
-/* PLOT */
+/* CHART */
 
 .plot{
-
 position:relative;
 
 border-radius:14px;
@@ -113,7 +102,6 @@ box-shadow:
 inset 0 0 30px rgba(0,255,255,.12);
 
 overflow:hidden;
-
 }
 
 canvas{
@@ -125,14 +113,11 @@ display:block;
 /* LABELS */
 
 .labelsLayer{
-
 position:relative;
 height:100%;
-
 }
 
 .xlabel{
-
 position:absolute;
 
 left:0;
@@ -145,10 +130,9 @@ white-space:nowrap;
 
 color:#0ea5b7;
 
-opacity:0.9;
+opacity:.9;
 
 text-shadow:0 0 6px rgba(0,255,255,.4);
-
 }
 
 </style>
@@ -162,7 +146,6 @@ text-shadow:0 0 6px rgba(0,255,255,.4);
 
 const SPREADSHEET_ID="130is9FQRGEP7nf-tLVPwi1VGCtvRGW4mkpJcEo5T_fc";
 const GID="41203482";
-
 const RANGE="J3:K19";
 
 const REFRESH_MS=90000;
@@ -220,15 +203,11 @@ return rows
 }
 
 function toNumber(v){
-
 const s=String(v??"")
 .replace(/\s/g,"")
 .replace(",",".");
-
 const n=Number(s);
-
 return Number.isFinite(n)?n:0;
-
 }
 
 /* SCALE */
@@ -248,17 +227,18 @@ else if(frac<=5)niceFrac=5;
 else niceFrac=10;
 
 return niceFrac*exp;
-
 }
 
 /* BAR */
 
 function drawBar(ctx,x,y,w,h){
 
+const depth=Math.min(10,w*0.25);
+
 const gradient=ctx.createLinearGradient(0,y,0,y+h);
 
 gradient.addColorStop(0,"#67e8f9");
-gradient.addColorStop(.5,"#06b6d4");
+gradient.addColorStop(.5,"#22d3ee");
 gradient.addColorStop(1,"#0891b2");
 
 ctx.fillStyle=gradient;
@@ -269,6 +249,30 @@ ctx.shadowBlur=18;
 ctx.fillRect(x,y,w,h);
 
 ctx.shadowBlur=0;
+
+/* top */
+
+ctx.fillStyle="rgba(255,255,255,0.25)";
+
+ctx.beginPath();
+ctx.moveTo(x,y);
+ctx.lineTo(x+depth,y-depth);
+ctx.lineTo(x+w,y-depth);
+ctx.lineTo(x+w-depth,y);
+ctx.closePath();
+ctx.fill();
+
+/* side */
+
+ctx.fillStyle="rgba(0,0,0,0.35)";
+
+ctx.beginPath();
+ctx.moveTo(x+w,y);
+ctx.lineTo(x+w,y+h);
+ctx.lineTo(x+w+depth,y+h-depth);
+ctx.lineTo(x+w+depth,y-depth);
+ctx.closePath();
+ctx.fill();
 
 }
 
@@ -333,7 +337,7 @@ const W=rect.width-padL-padR;
 const H=rect.height-padT-padB;
 
 const n=items.length;
-const gap=12;
+const gap=8;
 
 const barW=Math.max(10,Math.floor((W-gap*(n-1))/n));
 
@@ -356,14 +360,17 @@ drawBar(ctx,x,y,barW,h);
 
 const text=it.value.toLocaleString();
 
-ctx.font="900 54px Inter";
-
-ctx.fillStyle="#14b8d4";
-
+ctx.font="900 56px Inter";
 ctx.textAlign="center";
 
+ctx.lineWidth=4;
+ctx.strokeStyle="rgba(0,0,0,0.7)";
+ctx.strokeText(text,x+barW/2,y-8);
+
+ctx.fillStyle="#0ea5b7";
+
 ctx.shadowColor="#06b6d4";
-ctx.shadowBlur=10;
+ctx.shadowBlur=12;
 
 ctx.fillText(text,x+barW/2,y-8);
 
@@ -378,9 +385,9 @@ label.className="xlabel";
 label.innerText=it.name;
 
 label.style.left=(x+barW/2)+"px";
-label.style.bottom="20px";
+label.style.bottom="10px";
 
-label.style.fontSize=Math.min(28,barW*0.35)+"px";
+label.style.fontSize=Math.min(32,barW*0.40)+"px";
 
 labelsLayer.appendChild(label);
 
