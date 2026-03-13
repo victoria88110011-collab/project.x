@@ -19,10 +19,10 @@ height:100vh;
 overflow:hidden;
 background:#020617;
 font-family:'Inter',sans-serif;
-color:#22d3ee;
+color:#14b8d4;
 }
 
-/* ===== GRID BACKGROUND ===== */
+/* GRID */
 
 body::before{
 
@@ -36,18 +36,18 @@ linear-gradient(90deg,#0ea5e9 1px, transparent 1px);
 
 background-size:80px 80px;
 
-opacity:.06;
-
-pointer-events:none;
+opacity:.05;
 
 }
 
-/* ===== LAYOUT ===== */
+/* HOST */
 
 .chartHost{
 width:100vw;
 height:100vh;
 }
+
+/* LAYOUT */
 
 .vwrap{
 
@@ -58,7 +58,7 @@ display:grid;
 grid-template-rows:
 90px
 2fr
-170px;
+160px;
 
 gap:16px;
 
@@ -68,7 +68,7 @@ box-sizing:border-box;
 
 }
 
-/* ===== TOTAL ===== */
+/* TOTAL */
 
 .cap{
 
@@ -81,19 +81,19 @@ font-weight:900;
 
 letter-spacing:3px;
 
-color:#22d3ee;
+color:#14b8d4;
 
 background:linear-gradient(180deg,#020617,#000);
 
 border-radius:14px;
 
 box-shadow:
-0 0 25px rgba(0,255,255,.45),
-inset 0 0 20px rgba(0,255,255,.18);
+0 0 25px rgba(0,255,255,.35),
+inset 0 0 20px rgba(0,255,255,.15);
 
 }
 
-/* ===== CHART ===== */
+/* PLOT */
 
 .plot{
 
@@ -101,16 +101,16 @@ position:relative;
 
 border-radius:14px;
 
-border:1px solid rgba(0,255,255,.3);
+border:1px solid rgba(0,255,255,.2);
 
 background:
-linear-gradient(to bottom, rgba(0,255,255,.12) 1px, transparent 1px);
+linear-gradient(to bottom, rgba(0,255,255,.10) 1px, transparent 1px);
 
 background-size:100% 20%;
 
 box-shadow:
-0 0 40px rgba(0,255,255,.15),
-inset 0 0 40px rgba(0,255,255,.15);
+0 0 30px rgba(0,255,255,.12),
+inset 0 0 30px rgba(0,255,255,.12);
 
 overflow:hidden;
 
@@ -122,35 +122,28 @@ height:100%;
 display:block;
 }
 
-/* ===== LABELS ===== */
+/* LABELS */
 
-.xlabels{
+.labelsLayer{
 
-display:flex;
-align-items:flex-start;
-justify-content:center;
-
-gap:0;
+position:relative;
+height:100%;
 
 }
 
 .xlabel{
 
-flex:1;
-
-text-align:center;
-
-font-weight:800;
-
-color:#22d3ee;
-
-text-shadow:0 0 8px #22d3ee;
-
-white-space:nowrap;
-overflow:hidden;
-text-overflow:ellipsis;
+position:absolute;
 
 transform:rotate(-45deg);
+
+font-weight:700;
+
+white-space:nowrap;
+
+color:#14b8d4;
+
+text-shadow:0 0 6px rgba(0,255,255,.4);
 
 }
 
@@ -166,14 +159,13 @@ transform:rotate(-45deg);
 const SPREADSHEET_ID="130is9FQRGEP7nf-tLVPwi1VGCtvRGW4mkpJcEo5T_fc";
 const GID="41203482";
 
-const TARGET=150000;
-const REFRESH_MS=90000;
-
 const RANGE="J3:K19";
+
+const REFRESH_MS=90000;
 
 const chart=document.getElementById("chart");
 
-/* ===== CSV ===== */
+/* CSV */
 
 function csvUrl(range){
 return `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=csv&gid=${GID}&range=${range}&t=${Date.now()}`;
@@ -235,7 +227,7 @@ return Number.isFinite(n)?n:0;
 
 }
 
-/* ===== SCALE ===== */
+/* SCALE */
 
 function niceMax(v){
 
@@ -255,7 +247,7 @@ return niceFrac*exp;
 
 }
 
-/* ===== BAR ===== */
+/* BAR */
 
 function drawBar(ctx,x,y,w,h){
 
@@ -267,8 +259,8 @@ gradient.addColorStop(1,"#0891b2");
 
 ctx.fillStyle=gradient;
 
-ctx.shadowColor="#22d3ee";
-ctx.shadowBlur=20;
+ctx.shadowColor="#06b6d4";
+ctx.shadowBlur=18;
 
 ctx.fillRect(x,y,w,h);
 
@@ -276,28 +268,7 @@ ctx.shadowBlur=0;
 
 }
 
-/* ===== AUTO FONT FOR VALUE ===== */
-
-function fitValueFont(ctx,text,maxWidth){
-
-let size=64;
-
-while(size>18){
-
-ctx.font=`900 ${size}px Inter`;
-
-if(ctx.measureText(text).width<maxWidth)
-return size;
-
-size-=2;
-
-}
-
-return 18;
-
-}
-
-/* ===== RENDER ===== */
+/* RENDER */
 
 function renderChart(pairs){
 
@@ -322,9 +293,7 @@ TOTAL ${total.toLocaleString()}
 <canvas></canvas>
 </div>
 
-<div class="xlabels">
-${items.map(it=>`<div class="xlabel">${it.name}</div>`).join("")}
-</div>
+<div class="labelsLayer"></div>
 
 </div>
 
@@ -332,11 +301,12 @@ ${items.map(it=>`<div class="xlabel">${it.name}</div>`).join("")}
 
 const plot=chart.querySelector(".plot");
 const canvas=chart.querySelector("canvas");
-const labels=[...chart.querySelectorAll(".xlabel")];
+const labelsLayer=chart.querySelector(".labelsLayer");
 
 function redraw(){
 
 const rect=plot.getBoundingClientRect();
+
 const dpr=window.devicePixelRatio||1;
 
 canvas.width=rect.width*dpr;
@@ -344,6 +314,8 @@ canvas.height=rect.height*dpr;
 
 canvas.style.width=rect.width+"px";
 canvas.style.height=rect.height+"px";
+
+labelsLayer.innerHTML="";
 
 const ctx=canvas.getContext("2d");
 
@@ -365,24 +337,6 @@ const totalW=n*barW+(n-1)*gap;
 
 let startX=padL+(W-totalW)/2;
 
-labels.forEach(l=>{
-
-l.style.maxWidth=barW+"px";
-
-let size=28;
-
-while(size>10){
-
-l.style.fontSize=size+"px";
-
-if(l.scrollWidth<=barW) break;
-
-size-=1;
-
-}
-
-});
-
 items.forEach((it,i)=>{
 
 let pct=(it.value/axisMax)*100;
@@ -394,22 +348,37 @@ const y=padT+(H-h);
 
 drawBar(ctx,x,y,barW,h);
 
+/* VALUE */
+
 const text=it.value.toLocaleString();
 
-const size=fitValueFont(ctx,text,barW*1.2);
+ctx.font="900 54px Inter";
 
-ctx.font=`900 ${size}px Inter`;
-
-ctx.fillStyle="#22d3ee";
+ctx.fillStyle="#14b8d4";
 
 ctx.textAlign="center";
 
-ctx.shadowColor="#22d3ee";
-ctx.shadowBlur=12;
+ctx.shadowColor="#06b6d4";
+ctx.shadowBlur=10;
 
 ctx.fillText(text,x+barW/2,y-8);
 
 ctx.shadowBlur=0;
+
+/* LABEL */
+
+const label=document.createElement("div");
+
+label.className="xlabel";
+
+label.innerText=it.name;
+
+label.style.left=(x+barW/2)+"px";
+label.style.bottom="20px";
+
+label.style.fontSize=Math.min(28,barW*0.35)+"px";
+
+labelsLayer.appendChild(label);
 
 });
 
