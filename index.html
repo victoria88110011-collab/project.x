@@ -14,7 +14,7 @@ padding:0;
 width:100vw;
 height:100vh;
 overflow:hidden;
-background:#0b0f1a;
+background:#05070d;
 font-family:Arial,sans-serif;
 color:#fff;
 }
@@ -23,6 +23,8 @@ color:#fff;
 width:100vw;
 height:100vh;
 }
+
+/* ==== Layout ==== */
 
 .vwrap{
 height:100%;
@@ -33,7 +35,7 @@ padding:20px;
 box-sizing:border-box;
 }
 
-/* TOTAL */
+/* ==== TOTAL ==== */
 
 .cap{
 display:flex;
@@ -41,23 +43,26 @@ justify-content:center;
 align-items:center;
 font-size:70px;
 font-weight:900;
-color:#fff;
 background:linear-gradient(180deg,#1f2937,#020617);
 border-radius:16px;
 box-shadow:
 0 10px 40px rgba(0,0,0,.6),
 inset 0 0 20px rgba(255,255,255,.05);
-letter-spacing:3px;
+letter-spacing:2px;
 }
 
-/* chart */
+/* ==== Chart ==== */
 
 .plot{
 position:relative;
-border-radius:18px;
+border-radius:14px;
 overflow:hidden;
-background:linear-gradient(180deg,#0f172a,#020617);
-box-shadow:inset 0 0 60px rgba(0,0,0,.7);
+
+background:
+radial-gradient(circle at center,#0f172a,#020617);
+
+box-shadow:
+inset 0 0 80px rgba(0,0,0,.9);
 }
 
 canvas{
@@ -66,17 +71,17 @@ height:100%;
 display:block;
 }
 
-/* target */
+/* ==== target ==== */
 
 .targetLabel{
 position:absolute;
 right:10px;
 font-size:14px;
 font-weight:900;
-color:#fff;
-background:#ef4444;
-padding:4px 10px;
-border-radius:999px;
+color:#ff4d4d;
+background:rgba(0,0,0,.6);
+padding:3px 8px;
+border-radius:20px;
 }
 
 .targetLine{
@@ -84,27 +89,29 @@ position:absolute;
 left:0;
 right:0;
 height:2px;
-background:#ef4444;
-box-shadow:0 0 10px #ef4444;
+background:#ff4d4d;
+box-shadow:0 0 10px #ff4d4d;
 }
 
-/* names */
+/* ==== Labels ==== */
 
 .xlabels{
 display:flex;
 justify-content:center;
 align-items:center;
-gap:10px;
-padding-top:10px;
+gap:8px;
+padding:6px 10px 0 10px;
 }
 
 .xlabel{
 flex:1;
 text-align:center;
+white-space:nowrap;
 font-weight:900;
-font-size:60px;
-transform:rotate(-60deg);
+font-size:55px;
 color:#cbd5f5;
+transform: translate(-12px,10px) rotate(-60deg);
+transform-origin:center;
 }
 
 </style>
@@ -128,8 +135,6 @@ const chart=document.getElementById("chart");
 function csvUrl(range){
 return `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=csv&gid=${GID}&range=${range}&t=${Date.now()}`;
 }
-
-/* CSV parser */
 
 function parseCSV(text){
 
@@ -163,6 +168,7 @@ continue;
 }
 
 cell+=ch;
+
 }
 
 row.push(cell);
@@ -179,51 +185,6 @@ const s=String(v??"").replace(/\s/g,"").replace(",",".");
 const n=Number(s);
 return Number.isFinite(n)?n:0;
 }
-
-/* colors */
-
-const COLORS=[
-["#2563eb","#60a5fa"],
-["#0ea5a4","#5eead4"],
-["#16a34a","#86efac"],
-["#6366f1","#a5b4fc"]
-];
-
-function colorForIndex(i){
-return COLORS[i%COLORS.length];
-}
-
-/* bar style */
-
-function drawBar(ctx,x,y,w,h,c1,c2){
-
-const g=ctx.createLinearGradient(0,y,0,y+h);
-g.addColorStop(0,c2);
-g.addColorStop(1,c1);
-
-ctx.fillStyle=g;
-ctx.fillRect(x,y,w,h);
-
-/* glass highlight */
-
-const glass=ctx.createLinearGradient(x,y,x+w,y);
-
-glass.addColorStop(0,"rgba(255,255,255,.35)");
-glass.addColorStop(.2,"rgba(255,255,255,.08)");
-glass.addColorStop(.5,"rgba(255,255,255,.03)");
-glass.addColorStop(1,"rgba(255,255,255,0)");
-
-ctx.fillStyle=glass;
-ctx.fillRect(x,y,w,h);
-
-/* top edge */
-
-ctx.fillStyle="rgba(255,255,255,.35)";
-ctx.fillRect(x,y,w,2);
-
-}
-
-/* scale */
 
 function niceMax(v){
 
@@ -243,15 +204,45 @@ return niceFrac*exp;
 
 }
 
-/* render */
+/* ==== Neon Cylinder Bar ==== */
+
+function drawCylinder(ctx,x,y,w,h){
+
+const r=w/2;
+
+const grad=ctx.createLinearGradient(x,0,x+w,0);
+grad.addColorStop(0,"#1e3a8a");
+grad.addColorStop(0.4,"#3b82f6");
+grad.addColorStop(0.6,"#60a5fa");
+grad.addColorStop(1,"#1e3a8a");
+
+ctx.fillStyle=grad;
+
+ctx.fillRect(x,y,w,h);
+
+/* top ellipse */
+
+ctx.beginPath();
+ctx.ellipse(x+r,y,r,r*0.4,0,0,Math.PI*2);
+ctx.fill();
+
+/* glow */
+
+ctx.shadowColor="#3b82f6";
+ctx.shadowBlur=20;
+ctx.fillRect(x,y,w,h);
+ctx.shadowBlur=0;
+
+}
+
+/* ==== Render ==== */
 
 function renderChart(pairs){
 
 let items=pairs.map(r=>({name:r[0],value:toNumber(r[1])}));
-
 items.sort((a,b)=>b.value-a.value);
 
-const total=items.reduce((s,i)=>s+i.value,0);
+const total = items.reduce((s,i)=>s+i.value,0);
 
 const maxData=Math.max(0,...items.map(x=>x.value));
 const axisMax=niceMax(maxData||1);
@@ -259,6 +250,7 @@ const axisMax=niceMax(maxData||1);
 const targetPct=(TARGET/axisMax)*100;
 
 chart.innerHTML=`
+
 <div class="vwrap">
 
 <div class="cap">
@@ -268,7 +260,7 @@ TOTAL ${total.toLocaleString()}
 <div class="plot">
 
 <div class="targetLine" style="bottom:${targetPct}%"></div>
-<div class="targetLabel" style="bottom:${targetPct}%">TARGET</div>
+<div class="targetLabel" style="bottom:${targetPct}%">ЦЕЛЬ ${TARGET}</div>
 
 <canvas></canvas>
 
@@ -279,6 +271,7 @@ ${items.map(it=>`<div class="xlabel">${it.name}</div>`).join("")}
 </div>
 
 </div>
+
 `;
 
 const plot=chart.querySelector(".plot");
@@ -300,38 +293,38 @@ const ctx=canvas.getContext("2d");
 ctx.setTransform(dpr,0,0,dpr,0,0);
 ctx.clearRect(0,0,rect.width,rect.height);
 
-const pad=20;
+const padL=20,padR=20,padT=20,padB=30;
 
-const W=rect.width-pad*2;
-const H=rect.height-pad*2;
+const W=rect.width-padL-padR;
+const H=rect.height-padT-padB;
 
 const n=items.length;
-const gap=20;
+const gap=16;
 
-const cellW=(W-gap*(n-1))/n;
-const barW=cellW*0.72;
+const barW=Math.max(20,Math.floor((W-gap*(n-1))/n));
 
-let startX=pad;
+const totalW=n*barW+(n-1)*gap;
+let startX=padL+(W-totalW)/2;
 
 items.forEach((it,i)=>{
 
 const pct=(it.value/axisMax)*100;
 const h=(pct/100)*H;
 
-const x=startX+i*(cellW+gap)+(cellW-barW)/2;
-const y=rect.height-pad-h;
-
-const [c1,c2]=colorForIndex(i);
-
-drawBar(ctx,x,y,barW,h,c1,c2);
+const x=startX+i*(barW+gap);
+const y=padT+(H-h);
 
 /* value */
 
 ctx.fillStyle="#ffffff";
-ctx.font="bold 48px Arial";
+ctx.font="800 48px Arial";
 ctx.textAlign="center";
 
-ctx.fillText(it.value.toLocaleString(), x+barW/2, y-10);
+ctx.fillText(it.value,x+barW/2,y-10);
+
+/* bar */
+
+drawCylinder(ctx,x,y,barW,h);
 
 });
 
@@ -341,8 +334,6 @@ redraw();
 window.addEventListener("resize",redraw);
 
 }
-
-/* load */
 
 async function load(){
 
