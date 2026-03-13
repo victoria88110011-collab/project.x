@@ -306,15 +306,14 @@ const [c1,c2]=colorForIndex(i);
 
 drawNeonBar(ctx,x,y,barW,h,c1,c2);
 
-/* percent */
 
-ctx.fillStyle="#94a3b8";
-ctx.font="bold 40px Arial";
+/* value */
+
+ctx.fillStyle="#ffffff";
+ctx.font="bold 48px Arial";
 ctx.textAlign="center";
 
-const percent=Math.round(pct)+"%";
-
-ctx.fillText(percent,x+barW/2,y-10);
+ctx.fillText(it.value.toLocaleString(), x+barW/2, y-10);
 
 });
 
