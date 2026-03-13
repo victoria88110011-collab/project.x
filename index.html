@@ -314,7 +314,7 @@ ctx.stroke();
 const steps=4;
 
 ctx.fillStyle="#22d3ee";
-ctx.font="600 16px Inter";
+ctx.font="700 18px Inter";
 ctx.textAlign="center";
 
 for(let i=0;i<=steps;i++){
@@ -341,18 +341,18 @@ ctx.stroke();
 
 /* подпись */
 
-const labelValue=(max/steps)*i;
+const labelValue = Math.round((max/steps)*i);
 
 let text;
 
-if(labelValue===0){
-text="0k";
+if(labelValue === 0){
+text = "0k";
 }
-else if(labelValue>=1000000){
-text=(labelValue/1000000).toFixed(1)+"M";
+else if(labelValue >= 1000000){
+text = (labelValue/1000000).toFixed(1) + "M";
 }
 else{
-text=Math.round(labelValue/1000)+"k";
+text = Math.round(labelValue/1000) + "k";
 }
 
 const lx=cx+Math.cos(angle)*(r+40);
