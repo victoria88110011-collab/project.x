@@ -1,10 +1,11 @@
+```html
 <!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
-<title>Bonus Chart</title>
+<title>Bonus Chart PRO</title>
 
 <style>
 
@@ -14,7 +15,6 @@ padding:0;
 width:100vw;
 height:100vh;
 overflow:hidden;
-
 background:linear-gradient(180deg,#0f172a,#020617);
 font-family:Inter,Arial,sans-serif;
 color:#fff;
@@ -25,13 +25,11 @@ width:100vw;
 height:100vh;
 }
 
-/* layout */
-
 .vwrap{
 height:100%;
 display:grid;
-grid-template-rows: 80px 2fr 1fr;
-gap:10px;
+grid-template-rows: 90px 1fr 140px;
+gap:14px;
 padding:20px;
 box-sizing:border-box;
 }
@@ -43,32 +41,33 @@ display:flex;
 justify-content:center;
 align-items:center;
 
-font-size:60px;
+font-size:64px;
 font-weight:900;
 
 background:linear-gradient(90deg,#22c55e,#4ade80);
 color:#022c22;
 
-border-radius:14px;
+border-radius:16px;
 
 box-shadow:
 0 10px 30px rgba(0,0,0,.45),
-0 0 20px rgba(34,197,94,.3);
+0 0 20px rgba(34,197,94,.35),
+0 0 60px rgba(34,197,94,.2);
 }
 
 /* plot */
 
 .plot{
 position:relative;
-border-radius:16px;
+border-radius:18px;
 
 background:
-radial-gradient(circle at top,rgba(255,255,255,.06),transparent 60%),
+radial-gradient(circle at top,rgba(255,255,255,.08),transparent 70%),
 linear-gradient(180deg,#020617,#020617);
 
 box-shadow:
-inset 0 0 40px rgba(255,255,255,.04),
-0 10px 40px rgba(0,0,0,.5);
+inset 0 0 40px rgba(255,255,255,.05),
+0 10px 40px rgba(0,0,0,.6);
 }
 
 canvas{
@@ -96,27 +95,31 @@ left:0;
 right:0;
 height:2px;
 background:#e11d48;
+opacity:.8;
 }
 
-/* names */
+/* labels */
 
 .xlabels{
 display:flex;
 justify-content:center;
 align-items:flex-start;
-gap:8px;
-padding:10px;
+gap:12px;
+padding-top:30px;
 }
 
 .xlabel{
 flex:1;
 text-align:center;
+white-space:nowrap;
 
 font-weight:900;
-font-size:40px;
+font-size:52px; /* +30% */
 
 transform:rotate(-60deg);
 transform-origin:center;
+
+color:#e2e8f0;
 }
 
 </style>
@@ -148,32 +151,22 @@ const COLORS=[
 ["#f97316","#fb923c"]
 ];
 
-/* csv url */
-
 function csvUrl(range){
 return `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=csv&gid=${GID}&range=${range}&t=${Date.now()}`;
 }
 
-/* parse */
-
 function parseCSV(text){
-
 const rows=[];
-
 text.split("\n").forEach(line=>{
 const r=line.split(",");
 if(r.length>=2) rows.push([r[0].trim(),r[1].trim()]);
 });
-
 return rows;
-
 }
 
 function toNumber(v){
 return Number(String(v).replace(/\s/g,"").replace(",","."))||0;
 }
-
-/* axis */
 
 function niceMax(v){
 
@@ -190,12 +183,11 @@ else if(frac<=5)niceFrac=5;
 else niceFrac=10;
 
 return niceFrac*exp;
-
 }
 
-/* modern bar */
+/* glass bar */
 
-function drawModernBar(ctx,x,y,w,h,colors){
+function drawBar(ctx,x,y,w,h,colors){
 
 const g=ctx.createLinearGradient(0,y,0,y+h);
 
@@ -205,7 +197,7 @@ g.addColorStop(1,colors[0]);
 ctx.fillStyle=g;
 
 ctx.shadowColor=colors[1];
-ctx.shadowBlur=25;
+ctx.shadowBlur=30;
 
 const r=10;
 
@@ -221,11 +213,26 @@ ctx.lineTo(x,y+h);
 ctx.closePath();
 ctx.fill();
 
+/* glass highlight */
+
+ctx.fillStyle="rgba(255,255,255,.18)";
+ctx.fillRect(x+4,y+4,w-8,6);
+
 ctx.shadowBlur=0;
 
 }
 
-/* render */
+function animateBars(ctx,bars,progress){
+
+bars.forEach(bar=>{
+
+const h=bar.h*progress;
+const y=bar.baseY + (bar.h-h);
+
+drawBar(ctx,bar.x,y,bar.w,h,bar.colors);
+
+});
+}
 
 function renderChart(pairs){
 
@@ -281,20 +288,21 @@ canvas.style.height=rect.height+"px";
 const ctx=canvas.getContext("2d");
 
 ctx.setTransform(dpr,0,0,dpr,0,0);
-
 ctx.clearRect(0,0,rect.width,rect.height);
 
-const pad=30;
+const pad=40;
 
 const W=rect.width-pad*2;
 const H=rect.height-pad*2;
 
 const n=items.length;
 
-const gap=20;
+const gap=24;
 const barW=Math.max(20,(W-gap*(n-1))/n);
 
 let startX=pad;
+
+const bars=[];
 
 items.forEach((it,i)=>{
 
@@ -305,11 +313,32 @@ const h=(pct/100)*H;
 const x=startX+i*(barW+gap);
 const y=pad+(H-h);
 
-const colors=COLORS[i%COLORS.length];
+bars.push({
+x:x,
+baseY:y,
+h:h,
+w:barW,
+colors:COLORS[i%COLORS.length]
+});
 
-drawModernBar(ctx,x,y,barW,h,colors);
+});
 
-/* percent */
+let progress=0;
+
+function frame(){
+
+progress+=0.05;
+if(progress>1)progress=1;
+
+ctx.clearRect(0,0,rect.width,rect.height);
+
+animateBars(ctx,bars,progress);
+
+/* labels */
+
+bars.forEach((bar,i)=>{
+
+const it=items[i];
 
 const percent=Math.round((it.value/maxData)*100);
 
@@ -317,16 +346,20 @@ ctx.fillStyle="#fff";
 ctx.textAlign="center";
 ctx.font="900 40px Arial";
 
-ctx.fillText(percent+"%",x+barW/2,y-10);
-
-/* crown */
+ctx.fillText(percent+"%",bar.x+bar.w/2,bar.baseY-12);
 
 if(i===0){
 ctx.font="50px serif";
-ctx.fillText("👑",x+barW/2,y-50);
+ctx.fillText("👑",bar.x+bar.w/2,bar.baseY-50);
 }
 
 });
+
+if(progress<1) requestAnimationFrame(frame);
+
+}
+
+frame();
 
 }
 
@@ -335,23 +368,19 @@ window.addEventListener("resize",redraw);
 
 }
 
-/* load */
-
 async function load(){
 
 const text=await fetch(csvUrl(RANGE)).then(r=>r.text());
-
 const data=parseCSV(text);
-
 renderChart(data);
 
 }
 
 load();
-
 setInterval(load,REFRESH_MS);
 
 </script>
 
 </body>
 </html>
+```
