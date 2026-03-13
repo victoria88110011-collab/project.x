@@ -20,72 +20,49 @@ overflow:hidden;
 background:#020617;
 font-family:'Inter',sans-serif;
 color:#14b8d4;
-
 position:relative;
 }
-/* ретро авто фон */
+
+/* фон авто */
 
 body::after{
-
 content:"";
 position:fixed;
 inset:0;
-
 background-image:url("https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=2000&q=80");
-
 background-size:cover;
 background-position:center;
-
 opacity:0.15;
-
 filter:blur(2px) brightness(0.35);
-
-pointer-events:none;
-
 z-index:-1;
-
 }
 
 /* HUD сетка */
 
 body::before{
-
 content:"";
 position:fixed;
 inset:0;
-
 background:
 linear-gradient(#0ea5e9 1px, transparent 1px),
 linear-gradient(90deg,#0ea5e9 1px, transparent 1px);
-
 background-size:80px 80px;
-
 opacity:.05;
-
-pointer-events:none;
-
 z-index:0;
-
 }
-
-/* HOST */
 
 .chartHost{
 width:100vw;
 height:100vh;
 }
 
-/* LAYOUT */
-
 .vwrap{
 height:100%;
 display:grid;
-
 grid-template-rows:
 90px
 2fr
 260px;
-
 gap:16px;
 padding:24px;
 box-sizing:border-box;
@@ -97,18 +74,12 @@ box-sizing:border-box;
 display:flex;
 justify-content:center;
 align-items:center;
-
 font-size:72px;
 font-weight:900;
-
 letter-spacing:3px;
-
 color:#14b8d4;
-
 background:linear-gradient(180deg,#020617,#000);
-
 border-radius:14px;
-
 box-shadow:
 0 0 25px rgba(0,255,255,.35),
 inset 0 0 20px rgba(0,255,255,.15);
@@ -118,20 +89,14 @@ inset 0 0 20px rgba(0,255,255,.15);
 
 .plot{
 position:relative;
-
 border-radius:14px;
-
 border:1px solid rgba(0,255,255,.2);
-
 background:
 linear-gradient(to bottom, rgba(0,255,255,.10) 1px, transparent 1px);
-
 background-size:100% 20%;
-
 box-shadow:
 0 0 30px rgba(0,255,255,.12),
 inset 0 0 30px rgba(0,255,255,.12);
-
 overflow:hidden;
 }
 
@@ -149,27 +114,38 @@ height:100%;
 }
 
 .xlabel{
-
 position:absolute;
 left:0;
-
 transform:translateX(-50%) rotate(-45deg);
-
 font-weight:800;
-
 white-space:nowrap;
-
 color:#22d3ee;
-
-/* подняли выше */
-bottom:60px;
-
+bottom:80px;
 text-shadow:
 0 2px 2px rgba(0,0,0,0.8),
 0 0 6px rgba(34,211,238,0.5);
-
 pointer-events:none;
+}
 
+/* SPEEDOMETER */
+
+.speedo{
+position:absolute;
+right:60px;
+top:40px;
+width:320px;
+height:320px;
+border-radius:50%;
+background: radial-gradient(circle,#020617 40%,#000 100%);
+border:2px solid rgba(34,211,238,.4);
+box-shadow:
+0 0 25px rgba(34,211,238,.4),
+inset 0 0 25px rgba(34,211,238,.25);
+}
+
+.speedo canvas{
+width:100%;
+height:100%;
 }
 
 </style>
@@ -184,7 +160,6 @@ pointer-events:none;
 const SPREADSHEET_ID="130is9FQRGEP7nf-tLVPwi1VGCtvRGW4mkpJcEo5T_fc";
 const GID="41203482";
 const RANGE="J3:K19";
-
 const REFRESH_MS=90000;
 
 const chart=document.getElementById("chart");
@@ -288,34 +263,73 @@ ctx.fillRect(x,y,w,h);
 
 ctx.shadowBlur=0;
 
-/* верх */
-
-ctx.fillStyle="rgba(255,255,255,0.35)";
-
-ctx.beginPath();
-ctx.moveTo(x,y);
-ctx.lineTo(x+depth,y-depth);
-ctx.lineTo(x+w,y-depth);
-ctx.lineTo(x+w-depth,y);
-ctx.closePath();
-ctx.fill();
-
-/* бок */
-
-ctx.fillStyle="rgba(0,0,0,0.45)";
-
-ctx.beginPath();
-ctx.moveTo(x+w,y);
-ctx.lineTo(x+w,y+h);
-ctx.lineTo(x+w+depth,y+h-depth);
-ctx.lineTo(x+w+depth,y-depth);
-ctx.closePath();
-ctx.fill();
-
-/* блик */
-
 ctx.fillStyle="rgba(255,255,255,0.15)";
 ctx.fillRect(x+2,y+2,w*0.15,h*0.9);
+
+}
+
+/* SPEEDOMETER */
+
+function drawSpeedometer(value,max){
+
+const canvas=document.getElementById("speedo");
+if(!canvas) return;
+
+const rect=canvas.parentElement.getBoundingClientRect();
+const dpr=window.devicePixelRatio||1;
+
+canvas.width=rect.width*dpr;
+canvas.height=rect.height*dpr;
+
+const ctx=canvas.getContext("2d");
+ctx.setTransform(dpr,0,0,dpr,0,0);
+
+const w=rect.width;
+const h=rect.height;
+
+const cx=w/2;
+const cy=h/2;
+const r=w*0.42;
+
+ctx.lineWidth=12;
+ctx.strokeStyle="rgba(34,211,238,.25)";
+ctx.beginPath();
+ctx.arc(cx,cy,r,Math.PI*0.75,Math.PI*2.25);
+ctx.stroke();
+
+const pct=Math.min(value/max,1);
+
+ctx.strokeStyle="#22d3ee";
+ctx.shadowColor="#22d3ee";
+ctx.shadowBlur=15;
+
+ctx.beginPath();
+ctx.arc(cx,cy,r,Math.PI*0.75,Math.PI*0.75 + pct*Math.PI*1.5);
+ctx.stroke();
+
+ctx.shadowBlur=0;
+
+const angle=Math.PI*0.75 + pct*Math.PI*1.5;
+
+const px=cx+Math.cos(angle)*(r-10);
+const py=cy+Math.sin(angle)*(r-10);
+
+ctx.lineWidth=4;
+ctx.strokeStyle="#67e8f9";
+
+ctx.beginPath();
+ctx.moveTo(cx,cy);
+ctx.lineTo(px,py);
+ctx.stroke();
+
+ctx.fillStyle="#22d3ee";
+ctx.beginPath();
+ctx.arc(cx,cy,6,0,Math.PI*2);
+ctx.fill();
+
+ctx.font="700 28px Inter";
+ctx.textAlign="center";
+ctx.fillText(value.toLocaleString(),cx,cy+60);
 
 }
 
@@ -342,6 +356,11 @@ TOTAL ${total.toLocaleString()}
 
 <div class="plot">
 <canvas></canvas>
+
+<div class="speedo">
+<canvas id="speedo"></canvas>
+</div>
+
 </div>
 
 <div class="labelsLayer"></div>
@@ -362,13 +381,7 @@ const dpr=window.devicePixelRatio||1;
 canvas.width=rect.width*dpr;
 canvas.height=rect.height*dpr;
 
-canvas.style.width=rect.width+"px";
-canvas.style.height=rect.height+"px";
-
-labelsLayer.innerHTML="";
-
 const ctx=canvas.getContext("2d");
-
 ctx.setTransform(dpr,0,0,dpr,0,0);
 
 ctx.clearRect(0,0,rect.width,rect.height);
@@ -385,6 +398,8 @@ const barW=Math.max(10,Math.floor((W-gap*(n-1))/n));
 const totalW=n*barW+(n-1)*gap;
 
 let startX=padL+(W-totalW)/2;
+
+labelsLayer.innerHTML="";
 
 items.forEach((it,i)=>{
 
@@ -409,12 +424,9 @@ ctx.strokeStyle="#00151f";
 ctx.strokeText(text,x+barW/2,y-8);
 
 ctx.fillStyle="#22d3ee";
-
 ctx.shadowColor="#22d3ee";
 ctx.shadowBlur=10;
-
 ctx.fillText(text,x+barW/2,y-8);
-
 ctx.shadowBlur=0;
 
 /* LABEL */
@@ -422,22 +434,22 @@ ctx.shadowBlur=0;
 const label=document.createElement("div");
 
 label.className="xlabel";
-
 label.innerText=it.name;
 
 label.style.left=(x+barW/2)+"px";
-label.style.bottom="80px";
-
 label.style.fontSize=Math.min(32,barW*0.40)+"px";
 
 labelsLayer.appendChild(label);
 
 });
 
+/* рисуем спидометр один раз */
+
+drawSpeedometer(total,axisMax*items.length);
+
 }
 
 redraw();
-
 window.addEventListener("resize",redraw);
 
 }
@@ -452,7 +464,6 @@ renderChart(data);
 }
 
 load();
-
 setInterval(load,REFRESH_MS);
 
 </script>
