@@ -5,7 +5,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
-<title>Bonus Chart PRO</title>
+<title>Bonus Chart</title>
 
 <style>
 
@@ -28,7 +28,7 @@ height:100vh;
 .vwrap{
 height:100%;
 display:grid;
-grid-template-rows: 90px 1fr 140px;
+grid-template-rows:90px 1fr 160px;
 gap:14px;
 padding:20px;
 box-sizing:border-box;
@@ -40,7 +40,6 @@ box-sizing:border-box;
 display:flex;
 justify-content:center;
 align-items:center;
-
 font-size:64px;
 font-weight:900;
 
@@ -51,11 +50,10 @@ border-radius:16px;
 
 box-shadow:
 0 10px 30px rgba(0,0,0,.45),
-0 0 20px rgba(34,197,94,.35),
-0 0 60px rgba(34,197,94,.2);
+0 0 20px rgba(34,197,94,.35);
 }
 
-/* plot */
+/* chart */
 
 .plot{
 position:relative;
@@ -95,17 +93,16 @@ left:0;
 right:0;
 height:2px;
 background:#e11d48;
-opacity:.8;
 }
 
-/* labels */
+/* names */
 
 .xlabels{
 display:flex;
 justify-content:center;
 align-items:flex-start;
 gap:12px;
-padding-top:30px;
+padding-top:20px;
 }
 
 .xlabel{
@@ -114,9 +111,9 @@ text-align:center;
 white-space:nowrap;
 
 font-weight:900;
-font-size:52px; /* +30% */
+font-size:52px;
 
-transform:rotate(-60deg);
+transform:translateY(20px) rotate(-60deg);
 transform-origin:center;
 
 color:#e2e8f0;
@@ -141,7 +138,7 @@ const RANGE="J3:K19";
 
 const chart=document.getElementById("chart");
 
-/* neon colors */
+/* colors */
 
 const COLORS=[
 ["#ff0080","#ff5db1"],
@@ -156,12 +153,16 @@ return `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=c
 }
 
 function parseCSV(text){
+
 const rows=[];
+
 text.split("\n").forEach(line=>{
 const r=line.split(",");
 if(r.length>=2) rows.push([r[0].trim(),r[1].trim()]);
 });
+
 return rows;
+
 }
 
 function toNumber(v){
@@ -183,9 +184,10 @@ else if(frac<=5)niceFrac=5;
 else niceFrac=10;
 
 return niceFrac*exp;
+
 }
 
-/* glass bar */
+/* draw bar */
 
 function drawBar(ctx,x,y,w,h,colors){
 
@@ -213,26 +215,11 @@ ctx.lineTo(x,y+h);
 ctx.closePath();
 ctx.fill();
 
-/* glass highlight */
-
-ctx.fillStyle="rgba(255,255,255,.18)";
-ctx.fillRect(x+4,y+4,w-8,6);
-
 ctx.shadowBlur=0;
 
 }
 
-function animateBars(ctx,bars,progress){
-
-bars.forEach(bar=>{
-
-const h=bar.h*progress;
-const y=bar.baseY + (bar.h-h);
-
-drawBar(ctx,bar.x,y,bar.w,h,bar.colors);
-
-});
-}
+/* render */
 
 function renderChart(pairs){
 
@@ -302,8 +289,6 @@ const barW=Math.max(20,(W-gap*(n-1))/n);
 
 let startX=pad;
 
-const bars=[];
-
 items.forEach((it,i)=>{
 
 const pct=(it.value/axisMax)*100;
@@ -313,32 +298,11 @@ const h=(pct/100)*H;
 const x=startX+i*(barW+gap);
 const y=pad+(H-h);
 
-bars.push({
-x:x,
-baseY:y,
-h:h,
-w:barW,
-colors:COLORS[i%COLORS.length]
-});
+const colors=COLORS[i%COLORS.length];
 
-});
+drawBar(ctx,x,y,barW,h,colors);
 
-let progress=0;
-
-function frame(){
-
-progress+=0.05;
-if(progress>1)progress=1;
-
-ctx.clearRect(0,0,rect.width,rect.height);
-
-animateBars(ctx,bars,progress);
-
-/* labels */
-
-bars.forEach((bar,i)=>{
-
-const it=items[i];
+/* percent */
 
 const percent=Math.round((it.value/maxData)*100);
 
@@ -346,20 +310,16 @@ ctx.fillStyle="#fff";
 ctx.textAlign="center";
 ctx.font="900 40px Arial";
 
-ctx.fillText(percent+"%",bar.x+bar.w/2,bar.baseY-12);
+ctx.fillText(percent+"%",x+barW/2,y-10);
+
+/* crown */
 
 if(i===0){
 ctx.font="50px serif";
-ctx.fillText("👑",bar.x+bar.w/2,bar.baseY-50);
+ctx.fillText("👑",x+barW/2,y-50);
 }
 
 });
-
-if(progress<1) requestAnimationFrame(frame);
-
-}
-
-frame();
 
 }
 
@@ -368,15 +328,20 @@ window.addEventListener("resize",redraw);
 
 }
 
+/* load */
+
 async function load(){
 
 const text=await fetch(csvUrl(RANGE)).then(r=>r.text());
+
 const data=parseCSV(text);
+
 renderChart(data);
 
 }
 
 load();
+
 setInterval(load,REFRESH_MS);
 
 </script>
