@@ -306,7 +306,11 @@ const h=rect.height;
 
 const cx=w/2;
 const cy=h/2;
-const r=w*0.36;
+
+/* внутренний отступ от края */
+const margin = 140;
+
+const r = Math.min(w,h)/2 - margin;
 
 /* фон шкалы */
 
@@ -362,8 +366,8 @@ else{
 text=(labelValue/1000)+"k";
 }
 
-const lx=cx+Math.cos(angle)*(r+190);
-const ly=cy+Math.sin(angle)*(r+190);
+const lx=cx+Math.cos(angle)*(r+60);
+const ly=cy+Math.sin(angle)*(r+60);
 
 ctx.fillText(text,lx,ly);
 
