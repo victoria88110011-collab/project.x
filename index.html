@@ -119,8 +119,13 @@ position:absolute;
 left:0;
 top:50%;
 transform:translate(-50%,-50%) rotate(-75deg);
+transform-origin:center;
+
 font-weight:800;
 white-space:nowrap;
+text-align:center;
+line-height:1.1;
+
 color:#22d3ee;
 
 text-shadow:
@@ -511,7 +516,9 @@ ctx.shadowBlur=0;
 const label=document.createElement("div");
 
 label.className="xlabel";
-label.innerText=it.name;
+
+/* автоматический перенос имени */
+label.innerHTML = it.name.replace(" ","<br>");
 
 label.style.left=(x+barW/2)+"px";
 label.style.fontSize="50px";
