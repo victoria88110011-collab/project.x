@@ -366,10 +366,15 @@ else{
 text=(labelValue/1000)+"k";
 }
 
-const lx=cx+Math.cos(angle)*(r+60);
-const ly=cy+Math.sin(angle)*(r+60);
+const lx = cx + Math.cos(angle) * (r + 60);
+const ly = cy + Math.sin(angle) * (r + 60);
 
-ctx.fillText(text,lx,ly);
+ctx.textBaseline = "middle";
+
+/* небольшая коррекция для верхних делений */
+const offsetY = Math.sin(angle) < -0.7 ? -20 : 0;
+
+ctx.fillText(text, lx, ly + offsetY);
 
 }
 
