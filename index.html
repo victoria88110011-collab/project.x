@@ -304,12 +304,14 @@ ctx.setTransform(dpr,0,0,dpr,0,0);
 const w=rect.width;
 const h=rect.height;
 
-const cx = w/2;
-const cy = h/2 + 80;   // опускаем центр вниз
+const cx = w / 2;
+const cy = h / 2;
 
-/* внутренний отступ от края */
-const margin = 40;     // было 140
-const r = Math.min(w,h)/2 - margin;
+/* расстояние для текста шкалы */
+const labelOffset = 120;
+
+/* радиус с учетом текста */
+const r = Math.min(w, h) / 2 - labelOffset - 40;
 
 /* фон шкалы */
 
