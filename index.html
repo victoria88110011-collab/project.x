@@ -308,7 +308,7 @@ const cx=w/2;
 const cy=h/2;
 
 /* внутренний отступ от края */
-const margin = 90;     // было 140
+const margin = 40;     // было 140
 const r = Math.min(w,h)/2 - margin;
 
 /* фон шкалы */
@@ -367,7 +367,7 @@ text=(labelValue/1000)+"k";
 
 /* одинаковая дистанция текста от дуги */
 
-const labelRadius = r + 100;
+const labelRadius = r + 120;
 
 const lx = cx + Math.cos(angle) * labelRadius;
 const ly = cy + Math.sin(angle) * labelRadius;
