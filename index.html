@@ -306,11 +306,11 @@ const h=rect.height;
 
 const cx=w/2;
 const cy=h/2;
-const r=w*0.42;
+const r=w*0.44;
 
 /* фон шкалы */
 
-ctx.lineWidth=16;
+ctx.lineWidth=30;
 ctx.strokeStyle="rgba(34,211,238,.25)";
 ctx.beginPath();
 ctx.arc(cx,cy,r,Math.PI*0.75,Math.PI*2.25);
@@ -320,8 +320,8 @@ ctx.stroke();
 
 const steps=4;
 
-ctx.fillStyle="#22d3ee";
-ctx.font="600 16px Inter";
+ctx.fillStyle="#e5e7eb";
+ctx.font="600 40px Inter";
 ctx.textAlign="center";
 
 for(let i=0;i<=steps;i++){
@@ -338,7 +338,7 @@ const y2=cy+Math.sin(angle)*(r+8);
 
 /* линия деления */
 
-ctx.lineWidth=3;
+ctx.lineWidth=8;
 ctx.strokeStyle="#22d3ee";
 
 ctx.beginPath();
@@ -358,8 +358,8 @@ text=(labelValue/1000000).toFixed(1)+"M";
 text=(labelValue/1000)+"k";
 }
 
-const lx=cx+Math.cos(angle)*(r+30);
-const ly=cy+Math.sin(angle)*(r+30);
+const lx=cx+Math.cos(angle)*(r+60);
+const ly=cy+Math.sin(angle)*(r+60);
 
 ctx.fillText(text,lx,ly);
 
@@ -372,6 +372,7 @@ const pct=Math.min(value/max,1);
 ctx.strokeStyle="#22d3ee";
 ctx.shadowColor="#22d3ee";
 ctx.shadowBlur=20;
+ctx.lineWidth=45;   // ← +50% от 30
 
 ctx.beginPath();
 ctx.arc(
@@ -392,7 +393,7 @@ const angle=Math.PI*0.75 + pct*Math.PI*1.5;
 const px=cx+Math.cos(angle)*(r-15);
 const py=cy+Math.sin(angle)*(r-15);
 
-ctx.lineWidth=4;
+ctx.lineWidth=10;
 ctx.strokeStyle="#67e8f9";
 
 ctx.beginPath();
@@ -409,11 +410,10 @@ ctx.fill();
 
 /* значение */
 
-ctx.font="700 28px Inter";
+ctx.font="700 50px Inter";
 ctx.textAlign="center";
 ctx.fillStyle="#e5e7eb";
-ctx.fillText(value.toLocaleString(),cx,cy+55);
-
+ctx.fillText(value.toLocaleString(),cx,cy+35);
 }
 
 /* RENDER */
