@@ -366,24 +366,17 @@ else{
 text=(labelValue/1000)+"k";
 }
 
-const lx = cx + Math.cos(angle) * (r + 60);
-const ly = cy + Math.sin(angle) * (r + 60);
+/* одинаковая дистанция текста от дуги */
+
+const labelRadius = r + 100;
+
+const lx = cx + Math.cos(angle) * labelRadius;
+const ly = cy + Math.sin(angle) * labelRadius;
 
 ctx.textBaseline = "middle";
+ctx.textAlign = "center";
 
-/* небольшая коррекция для верхних делений */
-const offsetY = Math.sin(angle) < -0.7 ? -20 : 0;
-
-/* дополнительная коррекция именно для 400k */
-let offsetX = 0;
-let offsetY2 = 0;
-
-if(text === "400k"){
-    offsetX = -30;
-    offsetY2 = -10;
-}
-
-ctx.fillText(text, lx + offsetX, ly + offsetY + offsetY2);
+ctx.fillText(text, lx, ly);
 
 }
 
