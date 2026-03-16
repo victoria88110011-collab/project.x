@@ -306,7 +306,7 @@ const h=rect.height;
 
 const cx=w/2;
 const cy=h/2;
-const r=w*0.44;
+const r=w*0.46;
 
 /* фон шкалы */
 
@@ -321,7 +321,7 @@ ctx.stroke();
 const steps=4;
 
 ctx.fillStyle="#e5e7eb";
-ctx.font="600 40px Inter";
+ctx.font="700 46px Inter";
 ctx.textAlign="center";
 
 for(let i=0;i<=steps;i++){
@@ -358,8 +358,8 @@ text=(labelValue/1000000).toFixed(1)+"M";
 text=(labelValue/1000)+"k";
 }
 
-const lx=cx+Math.cos(angle)*(r+60);
-const ly=cy+Math.sin(angle)*(r+60);
+const lx=cx+Math.cos(angle)*(r+110);
+const ly=cy+Math.sin(angle)*(r+110);
 
 ctx.fillText(text,lx,ly);
 
@@ -413,7 +413,10 @@ ctx.fill();
 ctx.font="700 50px Inter";
 ctx.textAlign="center";
 ctx.fillStyle="#e5e7eb";
-ctx.fillText(value.toLocaleString(),cx,cy+35);
+
+const centerText = value.toLocaleString() + " / " + max.toLocaleString();
+
+ctx.fillText(centerText,cx,cy+95);
 }
 
 /* RENDER */
