@@ -3,40 +3,97 @@
 <head>
 
 <meta charset="UTF-8"/>
-<title>HUD Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@600;900&display=swap" rel="stylesheet">
+<title>Bonus Dashboard</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700;900&display=swap" rel="stylesheet">
 
 <style>
 
-body{
+html,body{
 margin:0;
-background:#020617;
-font-family:Inter;
-color:#e5e7eb;
-overflow:hidden;
-}
-
-/* layout */
-
-.wrap{
-display:grid;
-grid-template-rows:80px 1fr;
+padding:0;
+width:100vw;
 height:100vh;
-padding:20px;
+overflow:hidden;
+background:#020617;
+font-family:'Inter',sans-serif;
+color:#14b8d4;
 }
 
-.total{
-text-align:center;
-font-size:48px;
+/* фон */
+
+body::after{
+content:"";
+position:fixed;
+inset:0;
+background-image:url("https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=2000&q=80");
+background-size:cover;
+background-position:center;
+opacity:0.15;
+filter:blur(2px) brightness(0.35);
+z-index:-1;
+}
+
+/* HUD сетка */
+
+body::before{
+content:"";
+position:fixed;
+inset:0;
+background:
+linear-gradient(#0ea5e9 1px, transparent 1px),
+linear-gradient(90deg,#0ea5e9 1px, transparent 1px);
+background-size:80px 80px;
+opacity:.05;
+z-index:0;
+}
+
+.chartHost{
+width:100vw;
+height:100vh;
+}
+
+.vwrap{
+height:100%;
+display:grid;
+grid-template-rows:90px 1fr 15vh;
+gap:16px;
+padding:24px;
+box-sizing:border-box;
+}
+
+/* TOTAL */
+
+.cap{
+display:flex;
+justify-content:center;
+align-items:center;
+font-size:72px;
 font-weight:900;
+letter-spacing:3px;
+color:#e5e7eb;
+background:linear-gradient(180deg,#020617,#000);
+border-radius:14px;
+box-shadow:
+0 0 25px rgba(0,255,255,.35),
+inset 0 0 20px rgba(0,255,255,.15);
 }
 
-/* plot */
+/* CHART */
 
 .plot{
 position:relative;
-height:100%;
+border-radius:14px;
+border:1px solid rgba(0,255,255,.2);
+background:
+linear-gradient(to bottom, rgba(0,255,255,.10) 1px, transparent 1px);
+background-size:100% 20%;
+box-shadow:
+0 0 30px rgba(0,255,255,.12),
+inset 0 0 30px rgba(0,255,255,.12);
+overflow:hidden;
 }
 
 canvas{
@@ -45,14 +102,41 @@ height:100%;
 display:block;
 }
 
-/* speedo */
+/* LABELS */
 
-#speedo{
+.labelsLayer{
+position:relative;
+height:100%;
+}
+
+.xlabel{
 position:absolute;
-right:40px;
+left:0;
+top:50%;
+transform:translate(-50%,-50%) rotate(-75deg);
+font-weight:800;
+white-space:nowrap;
+color:#e5e7eb;
+text-shadow:
+0 2px 2px rgba(0,0,0,0.8),
+0 0 6px rgba(34,211,238,0.5);
+pointer-events:none;
+}
+
+/* SPEEDO */
+
+.speedo{
+position:absolute;
+right:60px;
 top:40px;
-width:400px;
-height:400px;
+width:600px;
+height:600px;
+border-radius:50%;
+background: radial-gradient(circle,#020617 40%,#000 100%);
+border:2px solid rgba(34,211,238,.4);
+box-shadow:
+0 0 25px rgba(34,211,238,.4),
+inset 0 0 25px rgba(34,211,238,.25);
 }
 
 </style>
@@ -60,104 +144,168 @@ height:400px;
 
 <body>
 
-<div class="wrap">
-  <div id="total">TOTAL 0</div>
-  <div class="plot">
-    <canvas id="bars"></canvas>
-    <canvas id="speedo"></canvas>
-  </div>
-</div>
+<div id="chart" class="chartHost"></div>
 
 <script>
 
 /* CONFIG */
 
-const REFRESH_MS = 120000;
+const SPREADSHEET_ID="130is9FQRGEP7nf-tLVPwi1VGCtvRGW4mkpJcEo5T_fc";
+const GID="41203482";
+const RANGE="J3:K19";
+const REFRESH_MS=120000;
 
 /* STATE */
 
-const barsCanvas = document.getElementById("bars");
-const speedCanvas = document.getElementById("speedo");
+const chart=document.getElementById("chart");
 
-let barsCtx = barsCanvas.getContext("2d");
-let speedCtx = speedCanvas.getContext("2d");
+let canvas, ctx;
+let speedCanvas, speedCtx;
+let labelsLayer;
+let items=[];
 
-/* DATA (пример) */
+/* INIT UI */
 
-let demoData = [
-["A",100000],
-["B",90000],
-["C",80000],
-["D",70000],
-["E",60000],
-["F",50000],
-["G",40000]
-];
+function initUI(){
 
-/* RESIZE */
+chart.innerHTML=`
 
-function resize(canvas){
-  const dpr = window.devicePixelRatio || 1;
-  const rect = canvas.getBoundingClientRect();
+<div class="vwrap">
 
-  canvas.width = rect.width * dpr;
-  canvas.height = rect.height * dpr;
+<div class="cap" id="total">
+TOTAL 0
+</div>
 
-  const ctx = canvas.getContext("2d");
-  ctx.setTransform(dpr,0,0,dpr,0,0);
+<div class="plot">
+<canvas id="bars"></canvas>
 
-  return ctx;
+<div class="speedo">
+<canvas id="speedo"></canvas>
+</div>
+
+</div>
+
+<div class="labelsLayer"></div>
+
+</div>
+`;
+
+canvas=document.getElementById("bars");
+ctx=canvas.getContext("2d");
+
+speedCanvas=document.getElementById("speedo");
+speedCtx=speedCanvas.getContext("2d");
+
+labelsLayer=chart.querySelector(".labelsLayer");
+
+window.addEventListener("resize", redraw);
 }
+
+/* CSV */
+
+function csvUrl(){
+return `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=csv&gid=${GID}&range=${RANGE}`;
+}
+
+function parseCSV(text){
+return text.split("\n")
+.map(r=>r.split(","))
+.filter(r=>r.length>=2);
+}
+
+function toNumber(v){
+return Number(String(v).replace(/\s/g,"").replace(",","."))||0;
+}
+
+/* UPDATE */
+
+function updateChart(data){
+
+items=data.map(r=>({name:r[0],value:toNumber(r[1])}));
+items.sort((a,b)=>b.value-a.value);
+
+const total=items.reduce((s,i)=>s+i.value,0);
+
+document.getElementById("total").innerText=
+"TOTAL "+total.toLocaleString();
+
+redraw();
+}
+
+/* DRAW */
+
+function redraw(){
+
+const plot=chart.querySelector(".plot");
+
+const rect=plot.getBoundingClientRect();
+const dpr=window.devicePixelRatio||1;
 
 /* BARS */
 
-function drawBars(data){
+canvas.width=rect.width*dpr;
+canvas.height=rect.height*dpr;
 
-  barsCtx = resize(barsCanvas);
+ctx.setTransform(dpr,0,0,dpr,0,0);
+ctx.clearRect(0,0,rect.width,rect.height);
 
-  const W = barsCanvas.clientWidth;
-  const H = barsCanvas.clientHeight;
+const pad=40;
+const W=rect.width-pad*2;
+const H=rect.height-pad*2;
 
-  barsCtx.clearRect(0,0,W,H);
+const gap=12;
+const barW=(W-gap*(items.length-1))/items.length;
 
-  const max = Math.max(...data.map(d=>d[1]));
+const max=Math.max(...items.map(x=>x.value),1);
 
-  const barW = W/data.length * 0.6;
-  const gap = W/data.length * 0.4;
+labelsLayer.innerHTML="";
 
-  data.forEach((d,i)=>{
+items.forEach((it,i)=>{
 
-    const v = d[1];
+const h=(it.value/max)*H;
 
-    const h = (v/max)*H;
-    const x = i*(barW+gap)+gap/2;
-    const y = H-h;
+const x=pad+i*(barW+gap);
+const y=pad+(H-h);
 
-    /* glow */
+/* gradient */
 
-    barsCtx.shadowColor="#22d3ee";
-    barsCtx.shadowBlur=20;
+const g=ctx.createLinearGradient(0,y,0,y+h);
+g.addColorStop(0,"#67e8f9");
+g.addColorStop(1,"#0891b2");
 
-    /* gradient */
+ctx.fillStyle=g;
 
-    const g = barsCtx.createLinearGradient(0,y,0,y+h);
-    g.addColorStop(0,"#67e8f9");
-    g.addColorStop(1,"#0891b2");
+/* glow */
 
-    barsCtx.fillStyle=g;
-    barsCtx.fillRect(x,y,barW,h);
+ctx.shadowColor="#22d3ee";
+ctx.shadowBlur=20;
 
-    barsCtx.shadowBlur=0;
+ctx.fillRect(x,y,barW,h);
 
-    /* value */
+ctx.shadowBlur=0;
 
-    barsCtx.fillStyle="#fff";
-    barsCtx.font="20px Inter";
-    barsCtx.textAlign="center";
+/* value */
 
-    barsCtx.fillText(v.toLocaleString(),x+barW/2,y-10);
+ctx.fillStyle="#fff";
+ctx.font="900 40px Inter";
+ctx.textAlign="center";
 
-  });
+ctx.fillText(it.value.toLocaleString(),x+barW/2,y-10);
+
+/* label */
+
+const label=document.createElement("div");
+label.className="xlabel";
+label.innerHTML=it.name.replace(" ","<br>");
+label.style.left=(x+barW/2)+"px";
+
+labelsLayer.appendChild(label);
+
+});
+
+/* SPEEDO */
+
+drawSpeedo(items.reduce((s,i)=>s+i.value,0),1600000);
 
 }
 
@@ -165,82 +313,97 @@ function drawBars(data){
 
 function drawSpeedo(value,max){
 
-  speedCtx = resize(speedCanvas);
+const rect=speedCanvas.parentElement.getBoundingClientRect();
+const dpr=window.devicePixelRatio||1;
 
-  const W = speedCanvas.clientWidth;
-  const H = speedCanvas.clientHeight;
+speedCanvas.width=rect.width*dpr;
+speedCanvas.height=rect.height*dpr;
 
-  const cx=W/2;
-  const cy=H/2;
-  const r=Math.min(W,H)/2 - 30;
+speedCtx.setTransform(dpr,0,0,dpr,0,0);
+speedCtx.clearRect(0,0,rect.width,rect.height);
 
-  speedCtx.clearRect(0,0,W,H);
+const cx=rect.width/2;
+const cy=rect.height/2;
+const r=Math.min(rect.width,rect.height)/2-60;
 
-  /* base */
+/* base */
 
-  speedCtx.strokeStyle="rgba(255,255,255,.2)";
-  speedCtx.lineWidth=20;
+speedCtx.lineWidth=30;
+speedCtx.strokeStyle="rgba(34,211,238,.25)";
 
-  speedCtx.beginPath();
-  speedCtx.arc(cx,cy,r,Math.PI*0.75,Math.PI*2.25);
-  speedCtx.stroke();
+speedCtx.beginPath();
+speedCtx.arc(cx,cy,r,Math.PI*0.75,Math.PI*2.25);
+speedCtx.stroke();
 
-  /* progress */
+/* progress */
 
-  const pct = value/max;
+const pct=Math.min(value/max,1);
 
-  speedCtx.strokeStyle="#22d3ee";
-  speedCtx.shadowColor="#22d3ee";
-  speedCtx.shadowBlur=20;
+speedCtx.strokeStyle="#22d3ee";
+speedCtx.shadowColor="#22d3ee";
+speedCtx.shadowBlur=25;
 
-  speedCtx.beginPath();
-  speedCtx.arc(
-    cx,cy,r,
-    Math.PI*0.75,
-    Math.PI*0.75 + pct*Math.PI*1.5
-  );
-  speedCtx.stroke();
+speedCtx.beginPath();
+speedCtx.arc(
+cx,cy,r,
+Math.PI*0.75,
+Math.PI*0.75+pct*Math.PI*1.5
+);
+speedCtx.stroke();
 
-  speedCtx.shadowBlur=0;
+speedCtx.shadowBlur=0;
 
-  /* needle */
+/* needle */
 
-  const a = Math.PI*0.75 + pct*Math.PI*1.5;
+const a=Math.PI*0.75+pct*Math.PI*1.5;
 
-  speedCtx.beginPath();
-  speedCtx.moveTo(cx,cy);
-  speedCtx.lineTo(
-    cx + Math.cos(a)*(r-40),
-    cy + Math.sin(a)*(r-40)
-  );
-  speedCtx.strokeStyle="#fff";
-  speedCtx.lineWidth=3;
-  speedCtx.stroke();
+speedCtx.lineWidth=6;
+speedCtx.strokeStyle="#67e8f9";
+
+speedCtx.beginPath();
+speedCtx.moveTo(cx,cy);
+speedCtx.lineTo(
+cx+Math.cos(a)*(r-80),
+cy+Math.sin(a)*(r-80)
+);
+speedCtx.stroke();
+
+/* center */
+
+speedCtx.fillStyle="#22d3ee";
+speedCtx.beginPath();
+speedCtx.arc(cx,cy,6,0,Math.PI*2);
+speedCtx.fill();
+
+/* text */
+
+speedCtx.fillStyle="#e5e7eb";
+speedCtx.textAlign="center";
+
+speedCtx.font="700 40px Inter";
+speedCtx.fillText(value.toLocaleString(),cx,cy+40);
 
 }
 
-/* UPDATE */
+/* LOAD */
 
-function update(){
+async function load(){
 
-  const data = demoData.sort((a,b)=>b[1]-a[1]);
-
-  const total = data.reduce((s,d)=>s+d[1],0);
-
-  document.getElementById("total").innerText =
-    "TOTAL " + total.toLocaleString();
-
-  drawBars(data);
-  drawSpeedo(total,1600000);
+try{
+const text=await fetch(csvUrl(),{cache:"no-store"}).then(r=>r.text());
+const data=parseCSV(text);
+updateChart(data);
+}catch(e){
+console.log("error",e);
+}
 
 }
 
 /* INIT */
 
-window.addEventListener("resize", update);
-
-update();
-setInterval(update, REFRESH_MS);
+initUI();
+load();
+setInterval(load,REFRESH_MS);
 
 </script>
 
