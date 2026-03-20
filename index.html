@@ -297,11 +297,24 @@ ctx.shadowBlur=0;
 
 /* value */
 
-ctx.fillStyle="#fff";
-ctx.font="900 40px Inter";
+const text = it.value.toLocaleString();
+
+ctx.font="900 56px Inter";
 ctx.textAlign="center";
 
-ctx.fillText(it.value.toLocaleString(),x+barW/2,y-10);
+/* ОБВОДКА (глубина) */
+ctx.lineWidth=8;
+ctx.strokeStyle="#00151f";
+ctx.strokeText(text, x+barW/2, y-16);
+
+/* GLOW */
+ctx.fillStyle="#e5e7eb";
+ctx.shadowColor="#22d3ee";
+ctx.shadowBlur=14;
+
+ctx.fillText(text, x+barW/2, y-16);
+
+ctx.shadowBlur=0;
 
 /* label */
 
