@@ -313,23 +313,24 @@ speedCtx.clearRect(0,0,rect.width,rect.height);
 const cx=rect.width/2;
 const cy=rect.height/2;
 
-const r = Math.min(rect.width, rect.height) / 2 - 80;
+/* ГЛАВНОЕ — НОРМАЛЬНЫЙ РАДИУС */
+const r = Math.min(rect.width, rect.height)/2 - 40;
 
-/* base */
+/* ФОН ДУГИ */
 
-speedCtx.lineWidth=30;
+speedCtx.lineWidth=40;
 speedCtx.strokeStyle="rgba(34,211,238,.25)";
 
 speedCtx.beginPath();
 speedCtx.arc(cx,cy,r,Math.PI*0.75,Math.PI*2.25);
 speedCtx.stroke();
 
-/* ticks */
+/* ШКАЛА */
 
 const steps=4;
 
 speedCtx.fillStyle="#e5e7eb";
-speedCtx.font="700 40px Inter";
+speedCtx.font="700 46px Inter";
 speedCtx.textAlign="center";
 speedCtx.textBaseline="middle";
 
@@ -338,10 +339,10 @@ for(let i=0;i<=steps;i++){
 const pct=i/steps;
 const angle=Math.PI*0.75 + pct*Math.PI*1.5;
 
-/* линия */
+/* деление */
 
-const x1=cx+Math.cos(angle)*(r-10);
-const y1=cy+Math.sin(angle)*(r-10);
+const x1=cx+Math.cos(angle)*(r-20);
+const y1=cy+Math.sin(angle)*(r-20);
 
 const x2=cx+Math.cos(angle)*(r+10);
 const y2=cy+Math.sin(angle)*(r+10);
@@ -359,37 +360,45 @@ speedCtx.stroke();
 const val=(max/steps)*i;
 
 let text;
-
 if(val===0) text="0";
 else if(val>=1000000) text=(val/1000000).toFixed(1)+"M";
 else text=(val/1000)+"k";
 
-const labelRadius = r + 120;
+/* текст ближе — без огромных отступов */
 
-const lx = cx + Math.cos(angle) * labelRadius;
-const ly = cy + Math.sin(angle) * labelRadius;
+const labelR = r + 60;
+
+const lx = cx + Math.cos(angle) * labelR;
+const ly = cy + Math.sin(angle) * labelR;
 
 speedCtx.fillText(text, lx, ly);
 }
 
-/* progress */
+/* ПРОГРЕСС */
 
 const pct=Math.min(value/max,1);
 
 speedCtx.strokeStyle="#22d3ee";
+speedCtx.lineWidth=40;
 
 speedCtx.beginPath();
-speedCtx.arc(cx,cy,r,Math.PI*0.75,Math.PI*0.75+pct*Math.PI*1.5);
+speedCtx.arc(
+cx,
+cy,
+r,
+Math.PI*0.75,
+Math.PI*0.75 + pct*Math.PI*1.5
+);
 speedCtx.stroke();
 
-/* needle */
+/* СТРЕЛКА */
 
-const angle=Math.PI*0.75+pct*Math.PI*1.5;
+const angle=Math.PI*0.75 + pct*Math.PI*1.5;
 
 const px=cx+Math.cos(angle)*(r-80);
 const py=cy+Math.sin(angle)*(r-80);
 
-speedCtx.lineWidth=6;
+speedCtx.lineWidth=8;
 speedCtx.strokeStyle="#67e8f9";
 
 speedCtx.beginPath();
@@ -397,34 +406,30 @@ speedCtx.moveTo(cx,cy);
 speedCtx.lineTo(px,py);
 speedCtx.stroke();
 
-/* center */
+/* центр */
 
 speedCtx.fillStyle="#22d3ee";
 speedCtx.beginPath();
 speedCtx.arc(cx,cy,6,0,Math.PI*2);
 speedCtx.fill();
 
-/* value */
-
-const text = value.toLocaleString();
-
-speedCtx.font="900 64px Inter";
-speedCtx.textAlign="center";
-
-speedCtx.lineWidth=6;
-speedCtx.strokeStyle="#00151f";
-speedCtx.strokeText(text,cx,cy+40);
+/* значение */
 
 speedCtx.fillStyle="#e5e7eb";
-speedCtx.fillText(text,cx,cy+40);
 
-/* goal */
+speedCtx.font="900 64px Inter";
+speedCtx.fillText(value.toLocaleString(),cx,cy+40);
 
-speedCtx.font="600 48px Inter";
-speedCtx.fillText(max.toLocaleString(),cx,cy+120);
+/* разделитель */
 
+speedCtx.font="700 44px Inter";
+speedCtx.fillText("—",cx,cy+90);
+
+/* цель */
+
+speedCtx.font="700 50px Inter";
+speedCtx.fillText(max.toLocaleString(),cx,cy+140);
 }
-
 /* LOAD */
 
 async function load(){
