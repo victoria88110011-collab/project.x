@@ -240,11 +240,11 @@ const H=rect.height-pad*2;
 
 const gap=12;
 
-const rawBarW=(W-gap*(items.length-1))/items.length;
-const barW=rawBarW*0.8;
+/* ШИРИНА КАК БЫЛО */
+const barW=(W-gap*(items.length-1))/items.length;
 
-const totalBarsWidth = items.length * barW + (items.length - 1) * gap;
-const startX = pad + (W - totalBarsWidth) / 2;
+/* ВЫСОТА -20% */
+const heightScale=0.8;
 
 const max=Math.max(...items.map(x=>x.value),1);
 
@@ -252,9 +252,9 @@ labelsLayer.innerHTML="";
 
 items.forEach((it,i)=>{
 
-const h=(it.value/max)*H;
+const h=(it.value/max)*H*heightScale;
 
-const x=startX+i*(barW+gap);
+const x=pad+i*(barW+gap);
 const y=pad+(H-h);
 
 const g=ctx.createLinearGradient(0,y,0,y+h);
