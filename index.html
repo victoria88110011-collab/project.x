@@ -299,136 +299,159 @@ drawSpeedo(items.reduce((s,i)=>s+i.value,0),1600000);
 
 /* SPEEDO */
 
-function drawSpeedo(value,max){
+function drawSpeedometer(value,max){
 
-const rect=speedCanvas.parentElement.getBoundingClientRect();
+const canvas=document.getElementById("speedo");
+if(!canvas) return;
+
+const rect=canvas.parentElement.getBoundingClientRect();
 const dpr=window.devicePixelRatio||1;
 
-speedCanvas.width=rect.width*dpr;
-speedCanvas.height=rect.height*dpr;
+canvas.width=rect.width*dpr;
+canvas.height=rect.height*dpr;
 
-speedCtx.setTransform(dpr,0,0,dpr,0,0);
-speedCtx.clearRect(0,0,rect.width,rect.height);
+const ctx=canvas.getContext("2d");
+ctx.setTransform(dpr,0,0,dpr,0,0);
 
-const cx=rect.width/2;
-const cy=rect.height/2;
+const w=rect.width;
+const h=rect.height;
 
-/* ГЛАВНОЕ — НОРМАЛЬНЫЙ РАДИУС */
-const r = Math.min(rect.width, rect.height)/2 - 40;
+const cx = w / 2;
+const cy = h / 2;
 
-/* ФОН ДУГИ */
+/* расстояние для текста шкалы */
+const labelOffset = 120;
 
-speedCtx.lineWidth=40;
-speedCtx.strokeStyle="rgba(34,211,238,.25)";
+/* радиус с учетом текста */
+const r = Math.min(w, h) / 2 - labelOffset - 40;
 
-speedCtx.beginPath();
-speedCtx.arc(cx,cy,r,Math.PI*0.75,Math.PI*2.25);
-speedCtx.stroke();
+/* фон шкалы */
 
-/* ШКАЛА */
+ctx.lineWidth=40;
+ctx.strokeStyle="rgba(34,211,238,.25)";
+ctx.beginPath();
+ctx.arc(cx,cy,r,Math.PI*0.75,Math.PI*2.25);
+ctx.stroke();
+
+/* деления */
 
 const steps=4;
 
-speedCtx.fillStyle="#e5e7eb";
-speedCtx.font="700 46px Inter";
-speedCtx.textAlign="center";
-speedCtx.textBaseline="middle";
+ctx.fillStyle="#e5e7eb";
+ctx.font="700 46px Inter";
+ctx.textAlign="center";
 
 for(let i=0;i<=steps;i++){
 
 const pct=i/steps;
+
 const angle=Math.PI*0.75 + pct*Math.PI*1.5;
 
-/* деление */
+const x1=cx+Math.cos(angle)*(r-10);
+const y1=cy+Math.sin(angle)*(r-10);
 
-const x1=cx+Math.cos(angle)*(r-20);
-const y1=cy+Math.sin(angle)*(r-20);
+const x2=cx+Math.cos(angle)*(r+8);
+const y2=cy+Math.sin(angle)*(r+8);
 
-const x2=cx+Math.cos(angle)*(r+10);
-const y2=cy+Math.sin(angle)*(r+10);
+/* линия деления */
 
-speedCtx.lineWidth=6;
-speedCtx.strokeStyle="#22d3ee";
+ctx.lineWidth=8;
+ctx.strokeStyle="#22d3ee";
 
-speedCtx.beginPath();
-speedCtx.moveTo(x1,y1);
-speedCtx.lineTo(x2,y2);
-speedCtx.stroke();
+ctx.beginPath();
+ctx.moveTo(x1,y1);
+ctx.lineTo(x2,y2);
+ctx.stroke();
 
-/* текст */
+/* подпись */
 
-const val=(max/steps)*i;
+const labelValue=(max/steps)*i;
 
 let text;
-if(val===0) text="0";
-else if(val>=1000000) text=(val/1000000).toFixed(1)+"M";
-else text=(val/1000)+"k";
 
-/* текст ближе — без огромных отступов */
-
-const labelR = r + 60;
-
-const lx = cx + Math.cos(angle) * labelR;
-const ly = cy + Math.sin(angle) * labelR;
-
-speedCtx.fillText(text, lx, ly);
+if(labelValue===0){
+text="0";
+}
+else if(labelValue>=1000000){
+text=(labelValue/1000000).toFixed(1)+"M";
+}
+else{
+text=(labelValue/1000)+"k";
 }
 
-/* ПРОГРЕСС */
+/* одинаковая дистанция текста от дуги */
+
+const labelRadius = r + 120;
+
+const lx = cx + Math.cos(angle) * labelRadius;
+const ly = cy + Math.sin(angle) * labelRadius;
+
+ctx.textBaseline = "middle";
+ctx.textAlign = "center";
+
+ctx.fillText(text, lx, ly);
+
+}
+
+/* прогресс */
 
 const pct=Math.min(value/max,1);
 
-speedCtx.strokeStyle="#22d3ee";
-speedCtx.lineWidth=40;
+ctx.strokeStyle="#22d3ee";
+ctx.shadowColor="#22d3ee";
+ctx.shadowBlur=20;
+ctx.lineWidth=40;   // ← +50% от 30
 
-speedCtx.beginPath();
-speedCtx.arc(
+ctx.beginPath();
+ctx.arc(
 cx,
 cy,
 r,
 Math.PI*0.75,
 Math.PI*0.75 + pct*Math.PI*1.5
 );
-speedCtx.stroke();
+ctx.stroke();
 
-/* СТРЕЛКА */
+ctx.shadowBlur=0;
+
+/* стрелка */
 
 const angle=Math.PI*0.75 + pct*Math.PI*1.5;
 
 const px=cx+Math.cos(angle)*(r-80);
 const py=cy+Math.sin(angle)*(r-80);
 
-speedCtx.lineWidth=8;
-speedCtx.strokeStyle="#67e8f9";
+ctx.lineWidth=10;
+ctx.strokeStyle="#67e8f9";
 
-speedCtx.beginPath();
-speedCtx.moveTo(cx,cy);
-speedCtx.lineTo(px,py);
-speedCtx.stroke();
+ctx.beginPath();
+ctx.moveTo(cx,cy);
+ctx.lineTo(px,py);
+ctx.stroke();
 
 /* центр */
 
-speedCtx.fillStyle="#22d3ee";
-speedCtx.beginPath();
-speedCtx.arc(cx,cy,6,0,Math.PI*2);
-speedCtx.fill();
+ctx.fillStyle="#22d3ee";
+ctx.beginPath();
+ctx.arc(cx,cy,6,0,Math.PI*2);
+ctx.fill();
 
 /* значение */
 
-speedCtx.fillStyle="#e5e7eb";
+ctx.fillStyle="#e5e7eb";
+ctx.textAlign="center";
 
-speedCtx.font="900 64px Inter";
-speedCtx.fillText(value.toLocaleString(),cx,cy+40);
+/* TOTAL */
+ctx.font="700 54px Inter";
+ctx.fillText(value.toLocaleString(),cx,cy+60);
 
-/* разделитель */
+/* DASH */
+ctx.font="700 44px Inter";
+ctx.fillText("—",cx,cy+115);
 
-speedCtx.font="700 44px Inter";
-speedCtx.fillText("—",cx,cy+90);
-
-/* цель */
-
-speedCtx.font="700 50px Inter";
-speedCtx.fillText(max.toLocaleString(),cx,cy+140);
+/* GOAL */
+ctx.font="600 50px Inter";
+ctx.fillText(max.toLocaleString(),cx,cy+170);
 }
 /* LOAD */
 
