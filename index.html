@@ -70,12 +70,23 @@ box-sizing:border-box;
 display:flex;
 justify-content:center;
 align-items:center;
-font-size:72px;
+
+font-size:84px;          /* было 72 → увеличили */
 font-weight:900;
-letter-spacing:3px;
+letter-spacing:4px;     /* чуть шире */
+
 color:#e5e7eb;
+
+/* ГЛАВНОЕ — СВЕЧЕНИЕ ТЕКСТА */
+text-shadow:
+0 2px 4px rgba(0,0,0,0.9),
+0 0 12px rgba(34,211,238,0.7),
+0 0 30px rgba(34,211,238,0.5);
+
 background:linear-gradient(180deg,#020617,#000);
+
 border-radius:14px;
+
 box-shadow:
 0 0 25px rgba(0,255,255,.35),
 inset 0 0 20px rgba(0,255,255,.15);
