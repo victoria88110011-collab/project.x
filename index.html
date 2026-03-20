@@ -126,7 +126,7 @@ left:0;
 top:50%;
 transform:translate(-50%,-50%) rotate(-75deg);
 
-font-size:70px;
+font-size:60px;
 font-weight:900;
 
 color:#e5e7eb;
@@ -295,7 +295,7 @@ ctx.fillStyle=g;
 /* glow */
 
 ctx.shadowColor="#22d3ee";
-ctx.shadowBlur=20;
+ctx.shadowBlur=12;
 
 ctx.fillRect(x,y,barW,h);
 
@@ -311,14 +311,14 @@ ctx.textAlign="center";
 /* ОБВОДКА (глубина) */
 ctx.lineWidth=8;
 ctx.strokeStyle="#00151f";
-ctx.strokeText(text, x+barW/2, y-16);
+ctx.strokeText(text, x+barW/2, y-20);
 
 /* GLOW */
 ctx.fillStyle="#e5e7eb";
 ctx.shadowColor="#22d3ee";
 ctx.shadowBlur=14;
 
-ctx.fillText(text, x+barW/2, y-16);
+ctx.fillText(text, x+barW/2, y-20);
 
 ctx.shadowBlur=0;
 
@@ -407,11 +407,24 @@ speedCtx.fill();
 
 /* text */
 
-speedCtx.fillStyle="#e5e7eb";
+const text = value.toLocaleString();
+
+speedCtx.font="900 64px Inter";
 speedCtx.textAlign="center";
 
-speedCtx.font="700 40px Inter";
-speedCtx.fillText(value.toLocaleString(),cx,cy+40);
+/* ОБВОДКА */
+speedCtx.lineWidth=6;
+speedCtx.strokeStyle="#00151f";
+speedCtx.strokeText(text,cx,cy+60);
+
+/* GLOW */
+speedCtx.fillStyle="#e5e7eb";
+speedCtx.shadowColor="#22d3ee";
+speedCtx.shadowBlur=18;
+
+speedCtx.fillText(text,cx,cy+60);
+
+speedCtx.shadowBlur=0;
 
 }
 
