@@ -3,67 +3,56 @@
 <head>
 
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>HUD Dashboard</title>
 
-<title>Bonus Dashboard</title>
-
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@600;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@600;900&display=swap" rel="stylesheet">
 
 <style>
 
-html,body{
+body{
 margin:0;
-padding:0;
-width:100%;
-height:100%;
 background:#020617;
-font-family:'Inter',sans-serif;
+font-family:Inter;
 color:#e5e7eb;
 overflow:hidden;
 }
 
-/* контейнер */
+/* layout */
 
 .wrap{
 display:grid;
 grid-template-rows:80px 1fr;
-height:100%;
+height:100vh;
 padding:20px;
-box-sizing:border-box;
-gap:10px;
 }
-
-/* total */
 
 .total{
 text-align:center;
 font-size:48px;
-font-weight:800;
+font-weight:900;
 }
 
-/* chart */
+/* plot */
 
 .plot{
 position:relative;
 height:100%;
-border:1px solid rgba(0,255,255,.2);
-border-radius:10px;
-}
-
-/* speedometer */
-
-.speedo{
-position:absolute;
-right:20px;
-top:20px;
-width:300px;
-height:300px;
 }
 
 canvas{
-display:block;
 width:100%;
 height:100%;
+display:block;
+}
+
+/* speedo */
+
+#speedo{
+position:absolute;
+right:40px;
+top:40px;
+width:400px;
+height:400px;
 }
 
 </style>
@@ -72,11 +61,10 @@ height:100%;
 <body>
 
 <div class="wrap">
-  <div id="total" class="total">TOTAL 0</div>
-
+  <div id="total">TOTAL 0</div>
   <div class="plot">
     <canvas id="bars"></canvas>
-    <canvas id="speedo" class="speedo"></canvas>
+    <canvas id="speedo"></canvas>
   </div>
 </div>
 
@@ -84,50 +72,33 @@ height:100%;
 
 /* CONFIG */
 
-const SPREADSHEET_ID="130is9FQRGEP7nf-tLVPwi1VGCtvRGW4mkpJcEo5T_fc";
-const GID="41203482";
-const RANGE="J3:K19";
-
-const REFRESH_MS=300000; // 5 минут
+const REFRESH_MS = 120000;
 
 /* STATE */
 
-let barsCanvas = document.getElementById("bars");
-let speedCanvas = document.getElementById("speedo");
+const barsCanvas = document.getElementById("bars");
+const speedCanvas = document.getElementById("speedo");
 
 let barsCtx = barsCanvas.getContext("2d");
 let speedCtx = speedCanvas.getContext("2d");
 
-/* UTILS */
+/* DATA (пример) */
 
-function csvUrl(){
-  return `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=csv&gid=${GID}&range=${RANGE}`;
-}
-
-function parseCSV(text){
-  return text.split("\n")
-    .map(r=>r.split(","))
-    .filter(r=>r.length>=2);
-}
-
-function toNumber(v){
-  return Number(String(v).replace(/\s/g,"").replace(",",".")) || 0;
-}
-
-function niceMax(v){
-  const exp=Math.pow(10,Math.floor(Math.log10(v)));
-  const frac=v/exp;
-  if(frac<=1) return exp;
-  if(frac<=2) return 2*exp;
-  if(frac<=5) return 5*exp;
-  return 10*exp;
-}
+let demoData = [
+["A",100000],
+["B",90000],
+["C",80000],
+["D",70000],
+["E",60000],
+["F",50000],
+["G",40000]
+];
 
 /* RESIZE */
 
-function resizeCanvas(canvas){
-  const rect = canvas.getBoundingClientRect();
+function resize(canvas){
   const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
 
   canvas.width = rect.width * dpr;
   canvas.height = rect.height * dpr;
@@ -138,64 +109,77 @@ function resizeCanvas(canvas){
   return ctx;
 }
 
-/* DRAW BARS */
+/* BARS */
 
 function drawBars(data){
 
-  barsCtx = resizeCanvas(barsCanvas);
+  barsCtx = resize(barsCanvas);
 
   const W = barsCanvas.clientWidth;
   const H = barsCanvas.clientHeight;
 
   barsCtx.clearRect(0,0,W,H);
 
-  const max = niceMax(Math.max(...data.map(d=>d.value),1));
+  const max = Math.max(...data.map(d=>d[1]));
 
-  const barW = W / data.length * 0.6;
-  const gap = W / data.length * 0.4;
+  const barW = W/data.length * 0.6;
+  const gap = W/data.length * 0.4;
 
   data.forEach((d,i)=>{
 
+    const v = d[1];
+
+    const h = (v/max)*H;
     const x = i*(barW+gap)+gap/2;
-    const h = (d.value/max)*H;
     const y = H-h;
 
-    barsCtx.fillStyle = "#22d3ee";
+    /* glow */
+
+    barsCtx.shadowColor="#22d3ee";
+    barsCtx.shadowBlur=20;
+
+    /* gradient */
+
+    const g = barsCtx.createLinearGradient(0,y,0,y+h);
+    g.addColorStop(0,"#67e8f9");
+    g.addColorStop(1,"#0891b2");
+
+    barsCtx.fillStyle=g;
     barsCtx.fillRect(x,y,barW,h);
+
+    barsCtx.shadowBlur=0;
+
+    /* value */
 
     barsCtx.fillStyle="#fff";
     barsCtx.font="20px Inter";
     barsCtx.textAlign="center";
 
-    barsCtx.fillText(
-      d.value.toLocaleString(),
-      x+barW/2,
-      y-5
-    );
+    barsCtx.fillText(v.toLocaleString(),x+barW/2,y-10);
 
   });
 
 }
 
-/* DRAW SPEEDO */
+/* SPEEDO */
 
 function drawSpeedo(value,max){
 
-  speedCtx = resizeCanvas(speedCanvas);
+  speedCtx = resize(speedCanvas);
 
   const W = speedCanvas.clientWidth;
   const H = speedCanvas.clientHeight;
 
   const cx=W/2;
   const cy=H/2;
-  const r=Math.min(W,H)/2 - 20;
+  const r=Math.min(W,H)/2 - 30;
 
   speedCtx.clearRect(0,0,W,H);
 
   /* base */
 
   speedCtx.strokeStyle="rgba(255,255,255,.2)";
-  speedCtx.lineWidth=10;
+  speedCtx.lineWidth=20;
 
   speedCtx.beginPath();
   speedCtx.arc(cx,cy,r,Math.PI*0.75,Math.PI*2.25);
@@ -203,9 +187,12 @@ function drawSpeedo(value,max){
 
   /* progress */
 
-  const pct=Math.min(value/max,1);
+  const pct = value/max;
 
   speedCtx.strokeStyle="#22d3ee";
+  speedCtx.shadowColor="#22d3ee";
+  speedCtx.shadowBlur=20;
+
   speedCtx.beginPath();
   speedCtx.arc(
     cx,cy,r,
@@ -214,33 +201,31 @@ function drawSpeedo(value,max){
   );
   speedCtx.stroke();
 
+  speedCtx.shadowBlur=0;
+
   /* needle */
 
-  const angle=Math.PI*0.75 + pct*Math.PI*1.5;
-
-  const px=cx+Math.cos(angle)*(r-20);
-  const py=cy+Math.sin(angle)*(r-20);
-
-  speedCtx.strokeStyle="#fff";
-  speedCtx.lineWidth=3;
+  const a = Math.PI*0.75 + pct*Math.PI*1.5;
 
   speedCtx.beginPath();
   speedCtx.moveTo(cx,cy);
-  speedCtx.lineTo(px,py);
+  speedCtx.lineTo(
+    cx + Math.cos(a)*(r-40),
+    cy + Math.sin(a)*(r-40)
+  );
+  speedCtx.strokeStyle="#fff";
+  speedCtx.lineWidth=3;
   speedCtx.stroke();
 
 }
 
 /* UPDATE */
 
-function updateChart(rows){
+function update(){
 
-  const data = rows.map(r=>({
-    name:r[0],
-    value:toNumber(r[1])
-  })).sort((a,b)=>b.value-a.value);
+  const data = demoData.sort((a,b)=>b[1]-a[1]);
 
-  const total = data.reduce((s,d)=>s+d.value,0);
+  const total = data.reduce((s,d)=>s+d[1],0);
 
   document.getElementById("total").innerText =
     "TOTAL " + total.toLocaleString();
@@ -250,32 +235,12 @@ function updateChart(rows){
 
 }
 
-/* LOAD */
-
-async function load(){
-
-  try{
-    const res = await fetch(csvUrl(), {cache:"no-store"});
-    const text = await res.text();
-
-    const rows = parseCSV(text);
-
-    updateChart(rows);
-
-  }catch(e){
-    console.error("LOAD ERROR", e);
-  }
-
-}
-
 /* INIT */
 
-window.addEventListener("resize", ()=>{
-  load(); // просто перерисовка
-});
+window.addEventListener("resize", update);
 
-load();
-setInterval(load, REFRESH_MS);
+update();
+setInterval(update, REFRESH_MS);
 
 </script>
 
