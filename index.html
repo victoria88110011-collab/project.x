@@ -69,17 +69,12 @@ box-sizing:border-box;
 display:flex;
 justify-content:center;
 align-items:center;
-
 font-size:84px;
 font-weight:900;
 letter-spacing:4px;
-
 color:#e5e7eb;
-
 background:linear-gradient(180deg,#020617,#000);
-
 border-radius:14px;
-
 box-shadow:
 0 0 25px rgba(0,255,255,.35),
 inset 0 0 20px rgba(0,255,255,.15);
@@ -118,11 +113,9 @@ position:absolute;
 left:0;
 top:50%;
 transform:translate(-50%,-50%) rotate(-75deg);
-
 font-size:60px;
 font-weight:900;
 color:#e5e7eb;
-
 white-space:nowrap;
 pointer-events:none;
 }
@@ -152,10 +145,14 @@ inset 0 0 25px rgba(34,211,238,.25);
 
 <script>
 
+/* CONFIG */
+
 const SPREADSHEET_ID="130is9FQRGEP7nf-tLVPwi1VGCtvRGW4mkpJcEo5T_fc";
 const GID="41203482";
 const RANGE="J3:K19";
 const REFRESH_MS=120000;
+
+/* STATE */
 
 const chart=document.getElementById("chart");
 
@@ -163,6 +160,8 @@ let canvas, ctx;
 let speedCanvas, speedCtx;
 let labelsLayer;
 let items=[];
+
+/* INIT UI */
 
 function initUI(){
 
@@ -195,6 +194,8 @@ labelsLayer=chart.querySelector(".labelsLayer");
 window.addEventListener("resize", redraw);
 }
 
+/* CSV */
+
 function csvUrl(){
 return `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/export?format=csv&gid=${GID}&range=${RANGE}`;
 }
@@ -209,6 +210,8 @@ function toNumber(v){
 return Number(String(v).replace(/\s/g,"").replace(",","."))||0;
 }
 
+/* UPDATE */
+
 function updateChart(data){
 
 items=data.map(r=>({name:r[0],value:toNumber(r[1])}));
@@ -221,6 +224,8 @@ document.getElementById("total").innerText=
 
 redraw();
 }
+
+/* DRAW */
 
 function redraw(){
 
@@ -240,10 +245,10 @@ const H=rect.height-pad*2;
 
 const gap=12;
 
-/* ШИРИНА КАК БЫЛО */
+/* ширина */
 const barW=(W-gap*(items.length-1))/items.length;
 
-/* ВЫСОТА -20% */
+/* высота уменьшена */
 const heightScale=0.8;
 
 const max=Math.max(...items.map(x=>x.value),1);
@@ -292,7 +297,136 @@ labelsLayer.appendChild(label);
 drawSpeedo(items.reduce((s,i)=>s+i.value,0),1600000);
 }
 
-drawSpeedo
+/* SPEEDO */
+
+function drawSpeedo(value,max){
+
+const rect=speedCanvas.parentElement.getBoundingClientRect();
+const dpr=window.devicePixelRatio||1;
+
+speedCanvas.width=rect.width*dpr;
+speedCanvas.height=rect.height*dpr;
+
+speedCtx.setTransform(dpr,0,0,dpr,0,0);
+speedCtx.clearRect(0,0,rect.width,rect.height);
+
+const cx=rect.width/2;
+const cy=rect.height/2;
+
+const labelOffset = 120;
+const r = Math.min(rect.width, rect.height) / 2 - labelOffset - 40;
+
+/* base */
+
+speedCtx.lineWidth=30;
+speedCtx.strokeStyle="rgba(34,211,238,.25)";
+
+speedCtx.beginPath();
+speedCtx.arc(cx,cy,r,Math.PI*0.75,Math.PI*2.25);
+speedCtx.stroke();
+
+/* ticks */
+
+const steps=4;
+
+speedCtx.fillStyle="#e5e7eb";
+speedCtx.font="700 40px Inter";
+speedCtx.textAlign="center";
+speedCtx.textBaseline="middle";
+
+for(let i=0;i<=steps;i++){
+
+const pct=i/steps;
+const angle=Math.PI*0.75 + pct*Math.PI*1.5;
+
+/* линия */
+
+const x1=cx+Math.cos(angle)*(r-10);
+const y1=cy+Math.sin(angle)*(r-10);
+
+const x2=cx+Math.cos(angle)*(r+10);
+const y2=cy+Math.sin(angle)*(r+10);
+
+speedCtx.lineWidth=6;
+speedCtx.strokeStyle="#22d3ee";
+
+speedCtx.beginPath();
+speedCtx.moveTo(x1,y1);
+speedCtx.lineTo(x2,y2);
+speedCtx.stroke();
+
+/* текст */
+
+const val=(max/steps)*i;
+
+let text;
+
+if(val===0) text="0";
+else if(val>=1000000) text=(val/1000000).toFixed(1)+"M";
+else text=(val/1000)+"k";
+
+const labelRadius = r + 120;
+
+const lx = cx + Math.cos(angle) * labelRadius;
+const ly = cy + Math.sin(angle) * labelRadius;
+
+speedCtx.fillText(text, lx, ly);
+}
+
+/* progress */
+
+const pct=Math.min(value/max,1);
+
+speedCtx.strokeStyle="#22d3ee";
+
+speedCtx.beginPath();
+speedCtx.arc(cx,cy,r,Math.PI*0.75,Math.PI*0.75+pct*Math.PI*1.5);
+speedCtx.stroke();
+
+/* needle */
+
+const angle=Math.PI*0.75+pct*Math.PI*1.5;
+
+const px=cx+Math.cos(angle)*(r-80);
+const py=cy+Math.sin(angle)*(r-80);
+
+speedCtx.lineWidth=6;
+speedCtx.strokeStyle="#67e8f9";
+
+speedCtx.beginPath();
+speedCtx.moveTo(cx,cy);
+speedCtx.lineTo(px,py);
+speedCtx.stroke();
+
+/* center */
+
+speedCtx.fillStyle="#22d3ee";
+speedCtx.beginPath();
+speedCtx.arc(cx,cy,6,0,Math.PI*2);
+speedCtx.fill();
+
+/* value */
+
+const text = value.toLocaleString();
+
+speedCtx.font="900 64px Inter";
+speedCtx.textAlign="center";
+
+speedCtx.lineWidth=6;
+speedCtx.strokeStyle="#00151f";
+speedCtx.strokeText(text,cx,cy+40);
+
+speedCtx.fillStyle="#e5e7eb";
+speedCtx.fillText(text,cx,cy+40);
+
+/* goal */
+
+speedCtx.font="600 48px Inter";
+speedCtx.fillText(max.toLocaleString(),cx,cy+120);
+
+}
+
+/* LOAD */
 
 async function load(){
 
@@ -305,6 +439,8 @@ console.log("error",e);
 }
 
 }
+
+/* INIT */
 
 initUI();
 load();
