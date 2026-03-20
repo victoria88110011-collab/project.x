@@ -126,8 +126,8 @@ pointer-events:none;
 position:absolute;
 right:60px;
 top:40px;
-width:600px;
-height:600px;
+width:984px;
+height:984px;
 border-radius:50%;
 background: radial-gradient(circle,#020617 40%,#000 100%);
 border:2px solid rgba(34,211,238,.4);
@@ -320,7 +320,7 @@ const cx = w / 2;
 const cy = h / 2;
 
 /* расстояние для текста шкалы */
-const labelOffset = 120;
+const labelOffset = rect.width * 0.15;
 
 /* радиус с учетом текста */
 const r = Math.min(w, h) / 2 - labelOffset - 40;
@@ -381,7 +381,7 @@ text=(labelValue/1000)+"k";
 
 /* одинаковая дистанция текста от дуги */
 
-const labelRadius = r + 120;
+const labelRadius = r + rect.width * 0.15;
 
 const lx = cx + Math.cos(angle) * labelRadius;
 const ly = cy + Math.sin(angle) * labelRadius;
@@ -399,7 +399,7 @@ const pct=Math.min(value/max,1);
 
 ctx.strokeStyle="#22d3ee";
 ctx.shadowColor="#22d3ee";
-ctx.shadowBlur=20;
+ctx.shadowBlur=10;
 ctx.lineWidth=40;   // ← +50% от 30
 
 ctx.beginPath();
